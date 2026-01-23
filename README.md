@@ -1,40 +1,180 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# VelvetRope 🛡️
 
-## Getting Started
+**Privacy-First Confidential Swap Terminal for Solana**
 
-First, run the development server:
+VelvetRope delivers confidential swaps on Solana using Inco Lightning encrypted math and MagicBlock PER.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Architecture Overview
+
+```mermaid
+flowchart TB
+    subgraph Frontend["VelvetRope Frontend"]
+        UI[Web UI]
+    end
+
+    subgraph ConfidentialSwap["Velvet Swap (On-Chain)"]
+        AMM[Velvet Swap Program]
+        INCO[Inco Lightning]
+        TOKEN[Confidential SPL]
+        PER[MagicBlock PER]
+    end
+
+    UI --> AMM
+    AMM --> INCO
+    AMM --> TOKEN
+    AMM --> PER
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Privacy Stack
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+| Layer | Technology | What It Hides |
+|-------|------------|---------------|
+| **Confidential Swaps** | Velvet Swap + Inco Lightning | Pool reserves, swap amounts, fee accounting |
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## Features
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+- **Encrypted AMM** — Pool reserves stored as `Euint128` ciphertext; all math happens on encrypted values
+- **Encrypted Quotes** — UI displays ciphertext-only outputs before submitting swaps
+- **Permissioned Execution** — MagicBlock PER gates confidential state updates
+- **Confidential SPL Transfers** — Swap legs move encrypted balances between pool + user
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech Stack
 
-## Learn More
+| Component | Technology |
+|-----------|------------|
+| Framework | Next.js 14 (App Router) |
+| Styling | TailwindCSS |
+| Wallet | Solana Wallet Adapter |
+| Confidential AMM | [Velvet Swap](https://github.com/your-username/velvet-swap) |
+| Encrypted Math | [Inco Lightning](https://www.inco.network) |
+| Access Control | [MagicBlock PER](https://docs.magicblock.gg) |
+| RPC | [Helius](https://helius.dev) |
 
-To learn more about Next.js, take a look at the following resources:
+## 📦 Installation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+```bash
+# Clone the repository
+git clone https://github.com/your-username/velvet-rope.git
+cd velvet-rope
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Install dependencies
+npm install
 
-## Deploy on Vercel
+# Copy environment file
+cp .env.example .env.local
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Add your Helius RPC URL to .env.local
+# Get one free at https://helius.dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## 🚀 Quick Start
+
+```bash
+# Development
+npm run dev
+
+# Production build
+npm run build
+npm start
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see VelvetRope in action.
+
+## 🔑 Environment Variables
+
+Create a `.env.local` file with:
+
+```env
+# Required: Helius RPC
+NEXT_PUBLIC_HELIUS_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
+
+# Optional: MagicBlock PER (ephemeral RPC)
+NEXT_PUBLIC_EPHEMERAL_RPC_URL=https://<tee-endpoint>
+
+# Optional: pre-created confidential mints
+NEXT_PUBLIC_CONFIDENTIAL_MINT_A=...
+NEXT_PUBLIC_CONFIDENTIAL_MINT_B=...
+```
+
+See `.env.example` for all configuration options.
+
+## How It Works
+
+### Confidential Swap Flow (Velvet Swap)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as VelvetRope UI
+    participant Wallet
+    participant VS as Velvet Swap
+    participant Inco as Inco Lightning
+
+    User->>UI: Select swap (Token A → Token B)
+    UI->>VS: Request encrypted quote
+    VS->>Inco: Encrypted math (reserves, amounts)
+    Inco-->>VS: Ciphertext result
+    VS-->>UI: Quote (ciphertext only)
+    UI->>User: Display encrypted quote
+    User->>Wallet: Approve transaction
+    Wallet->>VS: Submit swap_exact_in
+    VS->>Inco: Update encrypted reserves
+    VS-->>UI: ✓ Swap complete
+```
+
+## Use Cases
+
+- **Private OTC Trading** — Encrypted swaps without revealing order sizes
+- **Treasury Management** — Rebalance holdings without public visibility
+- **Market Making** — Confidential LP management without leaking inventory
+
+## 🧪 Testing
+
+```bash
+# Run on devnet for testing
+NEXT_PUBLIC_SOLANA_NETWORK=devnet npm run dev
+```
+
+## 🚢 Deployment
+
+Deploy to Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/velvet-rope)
+
+Or deploy to any Node.js hosting:
+
+```bash
+npm run build
+npm start
+```
+
+## Project Structure
+
+```
+src/
+├── app/
+│   └── page.tsx           # Confidential swap UI
+├── lib/
+│   └── private-swap.ts    # Velvet Swap helpers
+```
+
+## Related Repositories
+
+| Repository | Description |
+|------------|-------------|
+| [Velvet Swap](https://github.com/your-username/velvet-swap) | Confidential AMM program (Anchor/Rust) |
+| [Inco Lightning](https://github.com/Inco-fhevm/inco-solana-programs) | Confidential SPL tokens |
+
+## License
+
+MIT
+
+## Links
+
+- [Architecture Docs](./ARCHITECTURE.md)
+- [Helius RPC](https://helius.dev)
+- [MagicBlock PER](https://docs.magicblock.gg)
+
+---
+
+Built for **Solana Privacy Hack 2026** 🏴‍☠️
