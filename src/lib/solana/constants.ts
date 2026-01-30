@@ -25,13 +25,8 @@ export const LIGHT_ADDRESS_QUEUE = new PublicKey('aq1S9z4reTSQAdgWHGD2zDaS39sjGr
 // Light Protocol RPC endpoint (for indexer queries)
 export const LIGHT_RPC_ENDPOINT = 'https://devnet.helius-rpc.com';
 
-// MagicBlock PER SPL API
-export const PER_SPL_API_BASE = 'https://privacy.magicblock.app';
-export const PER_SPL_PROGRAM_ID = new PublicKey('SPLxh1LVZzEkX99H6rqYizhytLWPZVV296zyYDPagv2');
-
-// TEE Validator for Private Ephemeral Rollup
-export const TEE_VALIDATOR = new PublicKey('FnE6VJT5QNZdedZPnCoLsARgBwoE6DeJNjBs2H1gySXA');
-export const TEE_RPC_URL = 'https://tee.magicblock.app';
+// Range Protocol API for compliance
+export const RANGE_API_URL = 'https://api.range.org/v1/risk/address';
 
 // Devnet token mints for testing
 export const DEVNET_WSOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');

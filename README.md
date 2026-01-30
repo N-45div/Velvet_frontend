@@ -24,35 +24,28 @@ graph LR
         SDK["Swap Client"]
     end
 
-    subgraph "Privacy Layer"
-        TEE["MagicBlock TEE"]
+    subgraph "Privacy + Compliance"
+        RANGE["Range Protocol"]
+        INCO["Inco FHE + c-SPL"]
+        LIGHT["Light Protocol ZK"]
     end
 
     subgraph "On-Chain"
         PROGRAM["light_swap_psp"]
-        INCO["Inco Lightning"]
-        LIGHT["Light Protocol"]
     end
 
     UI --> SDK
-    SDK --> TEE
-    TEE --> PROGRAM
+    SDK --> RANGE
+    SDK --> PROGRAM
     PROGRAM --> INCO
     PROGRAM --> LIGHT
-
-    style UI fill:#7C3AED,color:#fff
-    style SDK fill:#7C3AED,color:#fff
-    style TEE fill:#F59E0B,color:#fff
-    style PROGRAM fill:#9945FF,color:#fff
-    style INCO fill:#22C55E,color:#fff
-    style LIGHT fill:#3B82F6,color:#fff
 ```
 
 ---
 
 ## Features
 
-- **Triple-Layer Privacy** — FHE encryption + ZK compression + TEE execution
+- **Triple-Layer Privacy** — FHE encryption + ZK compression + Range compliance
 - **Privacy Mode Toggle** — Show/hide estimated output amounts
 - **Real-time Pool Status** — Checks pool availability on load
 - **Wallet Integration** — Solana Wallet Adapter support
@@ -69,7 +62,7 @@ graph LR
 | **Styling** | TailwindCSS + Custom CSS |
 | **Wallet** | Solana Wallet Adapter |
 | **Blockchain** | Solana Devnet |
-| **Privacy** | MagicBlock PER, Light Protocol, Inco Lightning |
+| **Privacy** | Inco FHE, Light Protocol ZK, Range Compliance |
 | **RPC** | Helius (with Light Protocol indexer) |
 
 ---
@@ -105,25 +98,26 @@ Open [http://localhost:3000](http://localhost:3000) to see VelvetSwap.
 sequenceDiagram
     participant User
     participant UI as VelvetSwap
-    participant Wallet
-    participant TEE as MagicBlock TEE
+    participant Range as Range Protocol
     participant Program as light_swap_psp
     participant Inco as Inco Lightning
+    participant Light as Light Protocol
 
-    User->>UI: Enter swap amount
-    UI->>UI: Calculate quote (client-side)
+    User->>UI: Connect wallet
+    UI->>Range: Check compliance (risk score)
+    Range-->>UI: {riskScore: 1, compliant: true}
+    
+    User->>UI: Enter swap amount (0.03 SOL)
     UI->>UI: Encrypt amounts (FHE)
-    User->>Wallet: Click "Execute Private Swap"
-    Wallet->>UI: Sign message for TEE auth
-    UI->>TEE: Get auth token
-    TEE-->>UI: JWT token
-    UI->>TEE: Submit swap transaction
-    TEE->>Program: Execute swap_exact_in
+    UI->>Light: Fetch pool state + validity proof
+    Light-->>UI: Compressed pool data
+    
+    UI->>Program: swap_exact_in(encrypted_amounts)
     Program->>Inco: FHE math on reserves
-    Program->>Program: Update pool state
-    Program-->>TEE: Success
-    TEE-->>UI: Transaction signature
-    UI-->>User: Show explorer link
+    Program->>Inco: Confidential token transfers
+    Program->>Light: Commit updated pool state
+    Program-->>UI: Transaction signature
+    UI-->>User: "Private swap completed!"
 ```
 
 ---
@@ -181,7 +175,7 @@ Click the **Hidden/Visible** badge to toggle privacy mode:
 ### Swap Button States
 - **Connect Wallet**: No wallet connected
 - **Execute Private Swap**: Ready to swap
-- **Authenticating with TEE...**: Getting TEE auth
+- **Checking compliance...**: Range API verification
 - **Executing Private Swap...**: Transaction in progress
 
 ---
@@ -229,8 +223,8 @@ npm start
 |----------|------|
 | **On-Chain Program** | [private_swap_programs](../private_swap_programs) |
 | **Inco Lightning** | https://docs.inco.org/svm/home |
-| **MagicBlock PER** | https://docs.magicblock.gg |
 | **Light Protocol** | https://docs.lightprotocol.com |
+| **Range Protocol** | https://docs.range.org |
 | **Helius RPC** | https://helius.dev |
 
 ---

@@ -2,29 +2,31 @@
 
 ## Overview
 
-VelvetSwap is a privacy-first confidential swap terminal for Solana, combining:
+VelvetSwap is a privacy-first confidential swap terminal for Solana with integrated compliance, combining:
 
 - **Inco Lightning (FHE)** — Pool reserves encrypted, swap math on ciphertext
+- **Inco Token (c-SPL)** — Confidential token balances and transfers
 - **Light Protocol V2 (ZK)** — Pool state stored as ZK-compressed account
+- **Range Protocol (Compliance)** — Sanctions screening and risk scoring
 
-## Privacy Layer Status (Verified)
+## Privacy + Compliance Stack
 
-Verified via `private_swap_programs/scripts/verify-privacy-layers.ts`:
+| Layer | Technology | Purpose |
+|-------|------------|------------------|
+| **FHE (Inco Lightning)** | Homomorphic encryption | Pool reserves, swap amounts, fees encrypted as `Euint128` |
+| **c-SPL (Inco Token)** | Confidential tokens | User balances encrypted, transfers hide amounts |
+| **ZK (Light Protocol V2)** | Zero-knowledge proofs | Pool state in compressed accounts with validity proofs |
+| **Compliance (Range)** | Risk API | Sanctions screening & wallet risk scoring before swaps |
 
-| Layer | Status | Test Result |
-|-------|--------|-------------|
-| **Light Protocol (ZK)** | ✅ Working | Pool at `1QJcNYRBuDKQnWQofUQNwFg9MRoqgoLAUhW5js2ApS2`, leafIndex 290427 |
-| **Inco Lightning (FHE)** | ✅ Working | Program deployed, pool data: 203 bytes FHE ciphertexts |
-| **MagicBlock TEE** | ❌ Incompatible | `Cloner error: Failed to clone program SySTEM1eSU2p4BGQfQpimFEWWSC1XDFeun3Nqzz3rT7` |
+## Verified Deployment (Devnet)
 
-## Privacy Model
-
-| Layer | What's Protected | How |
-|-------|------------------|-----|
-| **FHE (Inco Lightning)** | Pool reserves, accumulated fees | Stored as `Euint128`, math via CPI |
-| **ZK (Light Protocol)** | Pool state transitions | Compressed accounts with validity proofs |
-
-> **TEE Limitation:** MagicBlock PER creates an isolated ephemeral environment that cannot clone Light Protocol programs from devnet mainstate. Swaps execute on devnet directly via Helius RPC with FHE + ZK privacy.
+| Component | Address | Status |
+|-----------|---------|--------|
+| VelvetSwap Program | `4b8jCufu7b4WKXdxFRQHWSks4QdskW62qF7tApSNXuZD` | ✅ Deployed |
+| Inco Token Program | `CYVSeUyVzHGVcrxsJt3E8tbaPCQT8ASdRR45g5WxUEW7` | ✅ Deployed |
+| Inco Lightning Program | `5sjEbPiqgZrYwR31ahR6Uk9wf5awoX61YGg7jExQSwaj` | ✅ Deployed |
+| Pool Authority PDA | `DSM8WDdZ5s3xkKbjtmzxpd59J42cuTZ1AJtFJTzLMkFS` | ✅ Active |
+| Example Swap TX | [View on Explorer](https://explorer.solana.com/tx/3kbJFHbfGKVKyf6xEs5jLnWcYnRjh7mNQa6o6kXjbRhGQb8kQMhnzhFaQA8WDE4joHGExxmguSRTJfGqMXpeHogB?cluster=devnet) | ✅ Confirmed |
 
 ## System Architecture
 
@@ -36,84 +38,85 @@ flowchart TB
     end
 
     subgraph Frontend["VelvetSwap Frontend"]
-        MAIN[Main UI<br/>page.tsx]
+        MAIN[Main UI]
+        RANGE[Range Compliance]
     end
 
     subgraph OnChain["On-Chain Programs"]
-        subgraph VelvetSwap["Velvet Swap"]
-            AMM[AMM Program]
-            POOL[Pool PDA]
-        end
-        INCO[Inco Lightning]
-        TOKEN[Confidential SPL]
-        PER[MagicBlock PER]
+        PROGRAM[VelvetSwap AMM]
+        INCO_FHE[Inco Lightning<br/>FHE Operations]
+        INCO_TOKEN[Inco Token<br/>c-SPL Transfers]
+        LIGHT[Light Protocol<br/>ZK Compression]
     end
 
     subgraph OffChain["Off-Chain Services"]
-        RPC[Helius RPC]
+        HELIUS[Helius RPC]
+        RANGE_API[Range Risk API]
     end
 
     USER --> WALLET
     WALLET --> MAIN
-    MAIN --> AMM
-    AMM --> INCO
-    AMM --> TOKEN
-    AMM --> PER
-    POOL --> INCO
-    AMM --> RPC
+    MAIN --> RANGE
+    RANGE --> RANGE_API
+    MAIN --> PROGRAM
+    PROGRAM --> INCO_FHE
+    PROGRAM --> INCO_TOKEN
+    PROGRAM --> LIGHT
+    MAIN --> HELIUS
 ```
 
 ## Component Details
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| **Velvet Swap** | Anchor (Rust) | Confidential AMM with encrypted reserves |
-| **Inco Lightning** | Inco Network | Encrypted math via `Euint128` |
-| **Confidential SPL** | inco_token | Encrypted token balances |
-| **MagicBlock PER** | ephemeral-rollups-sdk | Permissioned execution |
+| **VelvetSwap AMM** | Anchor (Rust) | Confidential AMM with encrypted reserves |
+| **Inco Lightning** | Inco Network | FHE math via `Euint128` (e_add, e_sub, e_mul, e_ge, e_select) |
+| **Inco Token** | c-SPL | Confidential token balances and transfers |
+| **Light Protocol** | ZK Compression | Compressed pool state with validity proofs |
+| **Range Protocol** | Risk API | Sanctions screening (OFAC/EU/UK) and ML risk scoring |
 
 ---
 
-## Flow A: Confidential Swap
-
-### Sequence Diagram
+## Confidential Swap Flow
 
 ```mermaid
 sequenceDiagram
     participant User
     participant UI as VelvetSwap UI
-    participant Wallet
-    participant VS as Velvet Swap
-    participant Inco as Inco Lightning
-    participant RPC as Helius RPC
+    participant Range as Range Protocol
+    participant Program as VelvetSwap
+    participant IncoToken as Inco Token
+    participant IncoFHE as Inco Lightning
+    participant Light as Light Protocol
 
-    User->>UI: Select swap direction
-    UI->>VS: Build encrypted quote
-    VS->>Inco: e_mul(reserve_a, reserve_b)
-    Inco-->>VS: Encrypted K value
-    VS-->>UI: Quote (ciphertext)
-
-    UI->>User: Display encrypted amounts
-    User->>Wallet: Approve transaction
-
-    Wallet->>VS: swap_exact_in(amount_in_cipher, amount_out_cipher)
-    VS->>Inco: Verify K invariant (encrypted)
-    VS->>Inco: e_add(reserve_a, amount_in)
-    VS->>Inco: e_sub(reserve_b, amount_out)
-    VS->>RPC: Commit state
-    VS-->>UI: ✓ Swap complete
+    User->>UI: Connect wallet
+    UI->>Range: GET /v1/risk/address?network=solana
+    Range-->>UI: {riskScore: 1, isCompliant: true}
+    
+    User->>UI: Enter 0.03 SOL swap
+    UI->>UI: Encrypt amounts as Euint128
+    UI->>Light: Fetch pool state + validity proof
+    Light-->>UI: Compressed pool data
+    
+    UI->>Program: swap_exact_in(encrypted_amounts)
+    Program->>IncoFHE: e_add(reserve_in, amount_in)
+    Program->>IncoFHE: e_sub(reserve_out, amount_out)
+    Program->>IncoFHE: e_select() for conditional
+    Program->>IncoToken: transfer(user → pool_vault)
+    Program->>IncoToken: transfer(pool_vault → user)
+    Program->>Light: Commit updated pool state
+    Program-->>UI: Transaction signature
+    UI-->>User: "Private swap completed!"
 ```
 
-### Velvet Swap Instructions
+## Program Instructions
 
 | Instruction | Description |
 |-------------|-------------|
-| `initialize_pool` | Create pool PDA with `Euint128` reserves |
-| `add_liquidity` | Deposit encrypted token amounts |
-| `remove_liquidity` | Withdraw encrypted token amounts |
-| `swap_exact_in` | Execute swap with encrypted amounts |
-| `create_permission` | Register with MagicBlock PER |
-| `delegate_pda` | Delegate to MagicBlock validator |
+| `initialize_pool` | Create compressed pool with encrypted zero reserves |
+| `add_liquidity` | Deposit encrypted token amounts (authority only) |
+| `remove_liquidity` | Withdraw encrypted token amounts (authority only) |
+| `swap_exact_in` | Execute swap with FHE constant-product math |
 
 ### Swap Logic (Encrypted)
 
@@ -137,35 +140,43 @@ flowchart TD
     D --> M
 ```
 
-### Privacy Properties
+## Privacy Properties
 
-- **Encrypted reserves**: `reserve_a`, `reserve_b` stored as `Euint128`
-- **Encrypted transfers**: All token movements use ciphertext
-- **Encrypted math**: `e_add`, `e_sub`, `e_mul`, `e_ge` operate on ciphertext
-- **Permissioned access**: MagicBlock PER controls state updates
-- **No plaintext leakage**: UI displays only hex ciphertext
+| Property | Implementation |
+|----------|----------------|
+| **Encrypted reserves** | `reserve_a`, `reserve_b` stored as `Euint128` |
+| **Encrypted transfers** | All token movements via Inco Token c-SPL |
+| **Encrypted math** | `e_add`, `e_sub`, `e_mul`, `e_ge`, `e_select` on ciphertext |
+| **Compressed state** | Light Protocol ZK validity proofs |
+| **Compliance** | Range Protocol blocks sanctioned addresses |
 
 ---
 
-## Security Model
+## Security & Compliance Model
 
 ```mermaid
 flowchart LR
-    subgraph Privacy["Privacy Layer"]
-        INCO[Inco Lightning<br/>Encrypted State]
+    subgraph Privacy["Privacy Layers"]
+        FHE[Inco FHE<br/>Encrypted Math]
+        CSPL[Inco c-SPL<br/>Encrypted Balances]
+        ZK[Light Protocol<br/>ZK Proofs]
     end
 
-    subgraph Access["Access Control"]
-        PER[MagicBlock PER]
+    subgraph Compliance["Compliance Layer"]
+        RANGE[Range Protocol<br/>Risk Scoring]
     end
-    Privacy --> Access
-    PER --> |Guards| INCO
+    
+    RANGE --> |Pre-swap check| Privacy
+    FHE --> |Encrypted state| ZK
+    CSPL --> |Hidden transfers| ZK
 ```
 
 | Layer | Protection |
 |-------|------------|
-| **State Privacy** | Inco Lightning encrypts all pool reserves and balances |
-| **Access Control** | MagicBlock PER gates confidential swaps |
+| **FHE Encryption** | Inco Lightning encrypts all pool reserves and swap amounts |
+| **c-SPL Tokens** | Inco Token hides user balances from observers |
+| **ZK Compression** | Light Protocol validates state without revealing data |
+| **Compliance** | Range API blocks sanctioned/high-risk addresses (score ≥ 5) |
 
 ---
 
@@ -175,16 +186,22 @@ flowchart LR
 velvet-rope/
 ├── src/
 │   ├── app/
-│   │   └── page.tsx           # Main swap UI
+│   │   └── page.tsx              # Main swap UI with compliance
 │   ├── lib/
-│   │   └── private-swap.ts    # Velvet Swap helpers
+│   │   ├── swap-client.ts        # VelvetSwap program client
+│   │   ├── range-compliance.ts   # Range Protocol integration
+│   │   └── inco-account-manager.ts # Inco Token account helpers
+│   └── idl/
+│       └── light_swap_psp.json   # Program IDL
 └── public/
 ```
 
-## Related Repositories
+## Related Links
 
-| Repository | Description |
-|------------|-------------|
-| [Velvet Swap](https://github.com/your-username/velvet-swap) | Confidential AMM (Anchor/Rust) |
-| [Inco Lightning](https://github.com/Inco-fhevm/inco-solana-programs) | Confidential SPL |
+| Resource | URL |
+|----------|-----|
+| On-Chain Program | [private_swap_programs](../private_swap_programs) |
+| Inco Lightning | https://docs.inco.org/svm/home |
+| Light Protocol | https://docs.lightprotocol.com |
+| Range Protocol | https://docs.range.org/risk-api/risk-introduction |
 

@@ -6,9 +6,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Shield, ArrowDownUp, Lock, ExternalLink, CheckCircle, AlertCircle, Loader2, EyeOff, Zap, Eye } from 'lucide-react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { getAuthToken } from '@magicblock-labs/ephemeral-rollups-sdk';
+// Range Protocol compliance is handled in range-compliance.ts
 import { 
-    TEE_RPC_URL,
     DEVNET_WSOL_MINT,
     DEVNET_TEST_USDC_MINT,
 } from '@/lib/solana/constants';
@@ -122,7 +121,6 @@ function PrivateSwapInterface() {
     const [step, setStep] = useState<SwapStep>('idle');
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const [txSignature, setTxSignature] = useState<string | null>(null);
-    const [perConnection, setPerConnection] = useState<Connection | null>(null);
     const [privacyMode, setPrivacyMode] = useState(true);
     const [poolStatus, setPoolStatus] = useState<'checking' | 'ready' | 'not_found'>('checking');
     const [demoMode, setDemoMode] = useState(true); // Demo mode for hackathon presentation
@@ -459,7 +457,7 @@ function PrivateSwapInterface() {
                     <div>
                         <p className="font-semibold text-sm text-primary">Triple-Layer Privacy</p>
                         <p className="text-muted-foreground text-xs mt-1 leading-relaxed">
-                            FHE-encrypted amounts • ZK-compressed state • TEE execution
+                            FHE-encrypted amounts • ZK-compressed state • Range compliance
                         </p>
                     </div>
                 </div>
@@ -506,7 +504,7 @@ function PrivateSwapInterface() {
                 ) : isProcessing ? (
                     <span className="flex items-center justify-center gap-2">
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        {step === 'authenticating' && 'Authenticating with TEE...'}
+                        {step === 'authenticating' && 'Checking compliance...'}
                         {step === 'swapping' && 'Executing Private Swap...'}
                     </span>
                 ) : (
