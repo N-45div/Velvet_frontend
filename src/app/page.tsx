@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Shield, ArrowDownUp, Lock, ExternalLink, CheckCircle, AlertCircle, Loader2, EyeOff, Zap, Eye, Copy, Wallet } from 'lucide-react';
+import { Shield, ArrowDownUp, Lock, ExternalLink, CheckCircle, AlertCircle, Loader2, EyeOff, Zap, Eye } from 'lucide-react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 // Range Protocol compliance is handled in range-compliance.ts
@@ -23,8 +23,6 @@ import {
 } from '@/lib/swap-client';
 import {
     ensureUserIncoAccounts,
-    INCO_MINT_A,
-    INCO_MINT_B,
 } from '@/lib/inco-account-manager';
 import {
     checkAddressCompliance,
@@ -126,8 +124,7 @@ function PrivateSwapInterface() {
     const [demoMode, setDemoMode] = useState(true); // Demo mode for hackathon presentation
     const [complianceResult, setComplianceResult] = useState<ComplianceResult | null>(null);
     const [complianceChecking, setComplianceChecking] = useState(false);
-    const [userIncoAccounts, setUserIncoAccounts] = useState<{ tokenA: PublicKey | null; tokenB: PublicKey | null } | null>(null);
-    const [copiedMint, setCopiedMint] = useState<string | null>(null);
+    const [balances, setBalances] = useState<{ tokenA: string | null; tokenB: string | null }>({ tokenA: null, tokenB: null });
 
     // Check pool status on mount
     useEffect(() => {
@@ -163,29 +160,43 @@ function PrivateSwapInterface() {
         checkCompliance();
     }, [publicKey]);
 
-    // Fetch user's Inco token accounts when wallet connects
+    // Fetch Inco token balances
     useEffect(() => {
-        const fetchIncoAccounts = async () => {
+        const fetchBalances = async () => {
             if (!publicKey || !connection) {
-                setUserIncoAccounts(null);
+                setBalances({ tokenA: null, tokenB: null });
                 return;
             }
             try {
-                const { findUserIncoAccounts } = await import('@/lib/inco-account-manager');
+                const { findUserIncoAccounts, INCO_TOKEN_PROGRAM_ID } = await import('@/lib/inco-account-manager');
                 const accounts = await findUserIncoAccounts(connection, publicKey);
-                setUserIncoAccounts(accounts);
+                
+                // Fetch account data to get balances
+                let balA: string | null = null;
+                let balB: string | null = null;
+                
+                if (accounts.tokenA) {
+                    const accInfo = await connection.getAccountInfo(accounts.tokenA);
+                    if (accInfo?.data) {
+                        // Balance is encrypted, show as "encrypted"
+                        balA = '🔒';
+                    }
+                }
+                if (accounts.tokenB) {
+                    const accInfo = await connection.getAccountInfo(accounts.tokenB);
+                    if (accInfo?.data) {
+                        balB = '🔒';
+                    }
+                }
+                
+                setBalances({ tokenA: balA, tokenB: balB });
             } catch (e) {
-                console.warn('Failed to fetch Inco accounts:', e);
+                console.warn('Failed to fetch balances:', e);
             }
         };
-        fetchIncoAccounts();
-    }, [publicKey, connection, txSignature]); // Re-fetch after successful swap
+        fetchBalances();
+    }, [publicKey, connection, txSignature]);
 
-    const copyToClipboard = async (text: string, label: string) => {
-        await navigator.clipboard.writeText(text);
-        setCopiedMint(label);
-        setTimeout(() => setCopiedMint(null), 2000);
-    };
 
     // Swap tokens
     const handleSwapTokens = () => {
@@ -353,7 +364,9 @@ function PrivateSwapInterface() {
             <div className="token-input overflow-hidden">
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
                     <span>You Pay</span>
-                    <span className="text-xs">Balance: --</span>
+                    <span className="text-xs">
+                        Bal: {fromToken.symbol === 'SOL' ? (balances.tokenA || '--') : (balances.tokenB || '--')}
+                    </span>
                 </div>
                 <div className="flex items-center gap-3">
                     <input
@@ -386,7 +399,9 @@ function PrivateSwapInterface() {
             <div className="token-input overflow-hidden">
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
                     <span>You Receive</span>
-                    <span className="text-xs">Balance: --</span>
+                    <span className="text-xs">
+                        Bal: {toToken.symbol === 'SOL' ? (balances.tokenA || '--') : (balances.tokenB || '--')}
+                    </span>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0 text-3xl font-semibold">
@@ -408,147 +423,39 @@ function PrivateSwapInterface() {
                 </div>
             </div>
 
-            {/* Pool Status */}
-            <div className={`rounded-xl p-3 text-xs flex items-center gap-2 ${
-                poolStatus === 'checking' ? 'bg-secondary/50' :
-                poolStatus === 'ready' ? 'status-success' :
-                'status-warning'
-            }`}>
-                {poolStatus === 'checking' && (
-                    <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
-                        <span className="text-muted-foreground">Checking pool status...</span>
-                    </>
-                )}
-                {poolStatus === 'ready' && (
-                    <>
-                        <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                        <span className="text-green-500 font-medium">Pool Active</span>
-                        <span className="text-green-500/70">• SOL/USDC • 0.3% fee</span>
-                    </>
-                )}
-                {poolStatus === 'not_found' && (
-                    <>
-                        <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                        <span className="text-amber-500">Pool initializing... Try swap anyway</span>
-                    </>
+            {/* Compact Status Row */}
+            <div className="flex items-center justify-between text-xs px-1">
+                <div className="flex items-center gap-1.5">
+                    {poolStatus === 'checking' ? (
+                        <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                    ) : poolStatus === 'ready' ? (
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    ) : (
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    )}
+                    <span className="text-muted-foreground">
+                        {poolStatus === 'ready' ? 'Pool active' : poolStatus === 'checking' ? 'Checking...' : 'Initializing'}
+                    </span>
+                </div>
+                {connected && (
+                    <div className="flex items-center gap-1.5">
+                        {complianceChecking ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                        ) : complianceResult?.isCompliant ? (
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        ) : complianceResult ? (
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+                        )}
+                        <span className="text-muted-foreground">
+                            {complianceChecking ? 'Checking...' : 
+                             complianceResult?.isCompliant ? `Compliant` : 
+                             complianceResult ? 'Blocked' : 'No API key'}
+                        </span>
+                    </div>
                 )}
             </div>
-
-            {/* Range Compliance Status */}
-            {connected && (
-                <div className={`rounded-xl p-3 text-xs flex items-center gap-2 ${
-                    complianceChecking ? 'bg-secondary/50' :
-                    complianceResult?.isCompliant ? 'bg-blue-500/10 border border-blue-500/20' :
-                    complianceResult ? 'status-error' :
-                    'bg-secondary/50'
-                }`}>
-                    {complianceChecking && (
-                        <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
-                            <span className="text-blue-500">Checking compliance via Range Protocol...</span>
-                        </>
-                    )}
-                    {!complianceChecking && complianceResult?.isCompliant && (
-                        <>
-                            <CheckCircle className="w-3.5 h-3.5 text-blue-500" />
-                            <span className="text-blue-500 font-medium">Range Compliant</span>
-                            <span className="text-blue-500/70">• Risk Score: {complianceResult.riskScore}/10</span>
-                        </>
-                    )}
-                    {!complianceChecking && complianceResult && !complianceResult.isCompliant && (
-                        <>
-                            <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                            <span className="text-red-500 font-medium">
-                                {complianceResult.isSanctioned ? 'Sanctioned Address' : 'High Risk'}
-                            </span>
-                            <span className="text-red-500/70">• Swap Blocked</span>
-                        </>
-                    )}
-                    {!complianceChecking && !complianceResult && (
-                        <>
-                            <Shield className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">Range API: Configure key for compliance</span>
-                        </>
-                    )}
-                </div>
-            )}
-
-            {/* Privacy Info */}
-            <div className="privacy-badge rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        <Shield className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                        <p className="font-semibold text-sm text-primary">Triple-Layer Privacy</p>
-                        <p className="text-muted-foreground text-xs mt-1 leading-relaxed">
-                            FHE-encrypted amounts • ZK-compressed state • Range compliance
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Confidential Token Info - Help users track their balances */}
-            {connected && (
-                <div className="rounded-xl p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Wallet className="w-4 h-4 text-purple-400" />
-                        <p className="font-semibold text-sm text-purple-400">Confidential Token Mints</p>
-                    </div>
-                    <p className="text-muted-foreground text-xs mb-3">
-                        Add these to Phantom to see your encrypted balances:
-                    </p>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-purple-300">c-SOL:</span>
-                                <code className="text-xs text-muted-foreground font-mono">
-                                    {INCO_MINT_A.toBase58().slice(0, 8)}...{INCO_MINT_A.toBase58().slice(-4)}
-                                </code>
-                            </div>
-                            <button
-                                onClick={() => copyToClipboard(INCO_MINT_A.toBase58(), 'sol')}
-                                className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
-                                title="Copy mint address"
-                            >
-                                {copiedMint === 'sol' ? (
-                                    <CheckCircle className="w-3.5 h-3.5 text-green-400" />
-                                ) : (
-                                    <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                                )}
-                            </button>
-                        </div>
-                        <div className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-blue-300">c-USDC:</span>
-                                <code className="text-xs text-muted-foreground font-mono">
-                                    {INCO_MINT_B.toBase58().slice(0, 8)}...{INCO_MINT_B.toBase58().slice(-4)}
-                                </code>
-                            </div>
-                            <button
-                                onClick={() => copyToClipboard(INCO_MINT_B.toBase58(), 'usdc')}
-                                className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
-                                title="Copy mint address"
-                            >
-                                {copiedMint === 'usdc' ? (
-                                    <CheckCircle className="w-3.5 h-3.5 text-green-400" />
-                                ) : (
-                                    <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                    {userIncoAccounts && (userIncoAccounts.tokenA || userIncoAccounts.tokenB) && (
-                        <div className="mt-3 pt-3 border-t border-white/10">
-                            <p className="text-xs text-green-400 flex items-center gap-1.5">
-                                <CheckCircle className="w-3 h-3" />
-                                You have Inco accounts: {userIncoAccounts.tokenA ? 'c-SOL' : ''} {userIncoAccounts.tokenA && userIncoAccounts.tokenB ? '•' : ''} {userIncoAccounts.tokenB ? 'c-USDC' : ''}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* Status Message */}
             {statusMessage && (
