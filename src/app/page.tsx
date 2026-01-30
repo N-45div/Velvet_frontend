@@ -125,6 +125,7 @@ function PrivateSwapInterface() {
     const [complianceResult, setComplianceResult] = useState<ComplianceResult | null>(null);
     const [complianceChecking, setComplianceChecking] = useState(false);
     const [balances, setBalances] = useState<{ tokenA: string | null; tokenB: string | null }>({ tokenA: null, tokenB: null });
+    const [balanceLoading, setBalanceLoading] = useState(false);
 
     // Check pool status on mount
     useEffect(() => {
@@ -167,31 +168,23 @@ function PrivateSwapInterface() {
                 setBalances({ tokenA: null, tokenB: null });
                 return;
             }
+            setBalanceLoading(true);
             try {
-                const { findUserIncoAccounts, INCO_TOKEN_PROGRAM_ID } = await import('@/lib/inco-account-manager');
+                const { findUserIncoAccounts } = await import('@/lib/inco-account-manager');
+                console.log('Fetching balances for:', publicKey.toBase58());
                 const accounts = await findUserIncoAccounts(connection, publicKey);
+                console.log('Found accounts:', accounts);
                 
-                // Fetch account data to get balances
-                let balA: string | null = null;
-                let balB: string | null = null;
-                
-                if (accounts.tokenA) {
-                    const accInfo = await connection.getAccountInfo(accounts.tokenA);
-                    if (accInfo?.data) {
-                        // Balance is encrypted, show as "encrypted"
-                        balA = '🔒';
-                    }
-                }
-                if (accounts.tokenB) {
-                    const accInfo = await connection.getAccountInfo(accounts.tokenB);
-                    if (accInfo?.data) {
-                        balB = '🔒';
-                    }
-                }
+                // Since balances are FHE-encrypted, we show account status
+                const balA = accounts.tokenA ? '✓ Active' : 'No account';
+                const balB = accounts.tokenB ? '✓ Active' : 'No account';
                 
                 setBalances({ tokenA: balA, tokenB: balB });
             } catch (e) {
                 console.warn('Failed to fetch balances:', e);
+                setBalances({ tokenA: 'Error', tokenB: 'Error' });
+            } finally {
+                setBalanceLoading(false);
             }
         };
         fetchBalances();
@@ -365,7 +358,7 @@ function PrivateSwapInterface() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
                     <span>You Pay</span>
                     <span className="text-xs">
-                        Bal: {fromToken.symbol === 'SOL' ? (balances.tokenA || '--') : (balances.tokenB || '--')}
+                        {balanceLoading ? '...' : (fromToken.symbol === 'SOL' ? (balances.tokenA || '--') : (balances.tokenB || '--'))}
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -400,7 +393,7 @@ function PrivateSwapInterface() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
                     <span>You Receive</span>
                     <span className="text-xs">
-                        Bal: {toToken.symbol === 'SOL' ? (balances.tokenA || '--') : (balances.tokenB || '--')}
+                        {balanceLoading ? '...' : (toToken.symbol === 'SOL' ? (balances.tokenA || '--') : (balances.tokenB || '--'))}
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
