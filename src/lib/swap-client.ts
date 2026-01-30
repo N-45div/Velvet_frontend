@@ -120,13 +120,14 @@ export function buildRemainingAccounts(
 }
 
 /**
- * Format validity proof for Anchor (Option<CompressedProof>)
- * Returns null for None variant when using proveByIndex=true
+ * Format validity proof for Anchor
+ * ValidityProof is a struct wrapping Option<CompressedProof>
+ * Format: { 0: proof } where proof is { a, b, c } or null
  */
 function formatValidityProof(compressedProof: any, proveByIndex: boolean = false) {
-    // When using proveByIndex=true (V2 batched trees), proof should be None
+    // When using proveByIndex=true (V2 batched trees), inner option should be None
     if (proveByIndex || !compressedProof) {
-        return null; // None variant for Option<CompressedProof>
+        return { 0: null }; // ValidityProof struct with None inner option
     }
     return {
         0: {
