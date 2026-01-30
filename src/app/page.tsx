@@ -181,19 +181,10 @@ function PrivateSwapInterface() {
         const inputAmount = Math.floor(parseFloat(amount) * Math.pow(10, fromToken.decimals));
 
         try {
-            // Step 1: Authenticate with MagicBlock TEE for private execution
+            // Step 1: Prepare encrypted amounts
+            // Using input_type=0: plaintext sent to program, encrypted on-chain via Inco Lightning
             setStep('authenticating');
-            setStatusMessage('Authenticating with MagicBlock TEE...');
-            
-            const auth = await getAuthToken(TEE_RPC_URL, publicKey, signMessage);
-            const teeConnection = new Connection(`${TEE_RPC_URL}?token=${auth.token}`, 'confirmed');
-            setPerConnection(teeConnection);
-
-            // Step 2: Prepare amounts for confidential swap
-            // Using input_type=0 means program encrypts on-chain via Inco Lightning
-            // The TEE ensures transaction data itself is private
-            setStep('swapping');
-            setStatusMessage('Executing confidential swap via TEE...');
+            setStatusMessage('Preparing confidential swap...');
             
             const { amountOut, feeAmount } = computeSwapQuote(
                 BigInt(inputAmount),
@@ -202,16 +193,21 @@ function PrivateSwapInterface() {
                 30n // 0.3% fee
             );
             
-            // Convert to buffers for on-chain processing
-            // TEE hides these values from public validators
+            // Format amounts for on-chain encryption via Inco Lightning
             const amountInCiphertext = encryptAmount(BigInt(inputAmount));
             const amountOutCiphertext = encryptAmount(amountOut);
             const feeAmountCiphertext = encryptAmount(feeAmount);
 
-            // Execute swap via TEE - transaction data is private
-            // Program uses Inco Lightning to encrypt and store in FHE format
+            // Step 2: Execute swap on devnet via Light Protocol
+            // Privacy provided by:
+            // - Inco Lightning: FHE encryption of pool reserves and swap amounts
+            // - Light Protocol: ZK compressed accounts for pool state
+            // Note: TEE execution incompatible with Light Protocol (different infrastructure)
+            setStep('swapping');
+            setStatusMessage('Executing confidential swap...');
+
             const swapTx = await swapExactIn({
-                connection: teeConnection,
+                connection, // Use devnet - Light Protocol requires devnet infrastructure
                 wallet: { publicKey, signTransaction },
                 mintA: DEVNET_WSOL_MINT,
                 mintB: DEVNET_TEST_USDC_MINT,
@@ -221,7 +217,7 @@ function PrivateSwapInterface() {
                 aToB: fromToken.symbol === 'SOL',
             });
             
-            const sig = await signAndSend(swapTx, teeConnection);
+            const sig = await signAndSend(swapTx, connection);
             setTxSignature(sig);
 
             setStep('complete');

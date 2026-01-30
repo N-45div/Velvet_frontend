@@ -457,13 +457,28 @@ export async function addLiquidity(params: {
 }
 
 /**
- * Encrypt an amount using Inco encryption (placeholder)
- * In production, use @inco/solana-sdk/encryption
+ * Encrypt an amount for Inco Lightning
+ * 
+ * With input_type=0 (plaintext), the on-chain program encrypts via CPI to Inco Lightning.
+ * The amount is passed as plaintext bytes, and new_euint128() encrypts it on-chain.
+ * 
+ * This provides:
+ * - Pool reserves stored encrypted (FHE)
+ * - Swap math computed on encrypted values
+ * - Only the initial tx data is plaintext (encrypted on-chain immediately)
  */
 export function encryptAmount(amount: bigint): Buffer {
-    // Placeholder - in production use Inco SDK
-    const buf = Buffer.alloc(32);
-    buf.writeBigUInt64LE(amount, 0);
+    // For input_type=0, we pass plaintext bytes
+    // The on-chain program encrypts via Inco Lightning CPI: new_euint128(data, input_type=0)
+    // This is the same approach used in the test files
+    const buf = Buffer.alloc(16); // u128 = 16 bytes
+    
+    // Write as little-endian u128
+    const lo = amount & BigInt('0xFFFFFFFFFFFFFFFF');
+    const hi = (amount >> 64n) & BigInt('0xFFFFFFFFFFFFFFFF');
+    buf.writeBigUInt64LE(lo, 0);
+    buf.writeBigUInt64LE(hi, 8);
+    
     return buf;
 }
 

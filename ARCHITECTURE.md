@@ -4,9 +4,17 @@
 
 VelvetSwap is a privacy-first confidential swap terminal for Solana, combining:
 
-- **[Velvet Swap](https://github.com/your-username/velvet-swap)** — Confidential AMM with encrypted reserves
-- **Inco Lightning** — Encrypted math + Confidential SPL token balances
-- **MagicBlock PER** — Permissioned execution for confidential state updates
+- **Inco Lightning (FHE)** — Pool reserves encrypted, swap math on ciphertext
+- **Light Protocol V2 (ZK)** — Pool state stored as ZK-compressed account
+
+## Privacy Model
+
+| Layer | What's Protected | How |
+|-------|------------------|-----|
+| **FHE (Inco Lightning)** | Pool reserves, accumulated fees | Stored as `Euint128`, math via CPI |
+| **ZK (Light Protocol)** | Pool state transitions | Compressed accounts with validity proofs |
+
+> **Note:** MagicBlock TEE is not used for swaps due to incompatibility with Light Protocol infrastructure. PER permissions are set up for future integration when Light Protocol supports TEE execution.
 
 ## System Architecture
 
