@@ -181,29 +181,37 @@ function PrivateSwapInterface() {
         const inputAmount = Math.floor(parseFloat(amount) * Math.pow(10, fromToken.decimals));
 
         try {
-            // Step 1: Prepare encrypted amounts (FHE layer)
+            // Step 1: Authenticate with MagicBlock TEE for private execution
             setStep('authenticating');
-            setStatusMessage('Encrypting swap amounts with FHE...');
+            setStatusMessage('Authenticating with MagicBlock TEE...');
             
-            // Encrypt amounts for confidential swap
-            const amountInCiphertext = encryptAmount(BigInt(inputAmount));
+            const auth = await getAuthToken(TEE_RPC_URL, publicKey, signMessage);
+            const teeConnection = new Connection(`${TEE_RPC_URL}?token=${auth.token}`, 'confirmed');
+            setPerConnection(teeConnection);
+
+            // Step 2: Prepare amounts for confidential swap
+            // Using input_type=0 means program encrypts on-chain via Inco Lightning
+            // The TEE ensures transaction data itself is private
+            setStep('swapping');
+            setStatusMessage('Executing confidential swap via TEE...');
+            
             const { amountOut, feeAmount } = computeSwapQuote(
                 BigInt(inputAmount),
                 BigInt(1_000_000_000), // Reserve - in production fetch from pool
                 BigInt(150_000_000_000),
                 30n // 0.3% fee
             );
+            
+            // Convert to buffers for on-chain processing
+            // TEE hides these values from public validators
+            const amountInCiphertext = encryptAmount(BigInt(inputAmount));
             const amountOutCiphertext = encryptAmount(amountOut);
             const feeAmountCiphertext = encryptAmount(feeAmount);
 
-            // Step 2: Execute swap via light_swap_psp program on devnet
-            // Note: For full privacy, this would go through MagicBlock TEE
-            // For now, execute directly on devnet to test Light Protocol integration
-            setStep('swapping');
-            setStatusMessage('Executing confidential swap on devnet...');
-
+            // Execute swap via TEE - transaction data is private
+            // Program uses Inco Lightning to encrypt and store in FHE format
             const swapTx = await swapExactIn({
-                connection,  // Use regular devnet connection for now
+                connection: teeConnection,
                 wallet: { publicKey, signTransaction },
                 mintA: DEVNET_WSOL_MINT,
                 mintB: DEVNET_TEST_USDC_MINT,
@@ -213,7 +221,7 @@ function PrivateSwapInterface() {
                 aToB: fromToken.symbol === 'SOL',
             });
             
-            const sig = await signAndSend(swapTx, connection);
+            const sig = await signAndSend(swapTx, teeConnection);
             setTxSignature(sig);
 
             setStep('complete');
