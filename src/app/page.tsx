@@ -27,6 +27,11 @@ import {
     INCO_MINT_A,
     INCO_MINT_B,
 } from '@/lib/inco-account-manager';
+import {
+    checkAddressCompliance,
+    formatComplianceStatus,
+    ComplianceResult,
+} from '@/lib/range-compliance';
 
 const WalletMultiButton = dynamic(
     () => import('@solana/wallet-adapter-react-ui').then(mod => mod.WalletMultiButton),
@@ -80,24 +85,24 @@ export default function Home() {
                 </div>
 
                 {/* Status Footer */}
-                <div className="mt-8 flex items-center justify-center gap-6">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Lock className="w-3 h-3 text-primary" />
-                        </div>
-                        <span>MagicBlock PER</span>
-                    </div>
+                <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <div className="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center">
                             <Shield className="w-3 h-3 text-green-500" />
                         </div>
-                        <span>FHE Encrypted</span>
+                        <span>Inco FHE</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="w-6 h-6 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                            <Lock className="w-3 h-3 text-purple-500" />
+                        </div>
+                        <span>Light ZK</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <EyeOff className="w-3 h-3 text-blue-500" />
+                            <CheckCircle className="w-3 h-3 text-blue-500" />
                         </div>
-                        <span>ZK Compressed</span>
+                        <span>Range Compliance</span>
                     </div>
                 </div>
             </div>
@@ -121,6 +126,8 @@ function PrivateSwapInterface() {
     const [privacyMode, setPrivacyMode] = useState(true);
     const [poolStatus, setPoolStatus] = useState<'checking' | 'ready' | 'not_found'>('checking');
     const [demoMode, setDemoMode] = useState(true); // Demo mode for hackathon presentation
+    const [complianceResult, setComplianceResult] = useState<ComplianceResult | null>(null);
+    const [complianceChecking, setComplianceChecking] = useState(false);
 
     // Check pool status on mount
     useEffect(() => {
@@ -135,6 +142,26 @@ function PrivateSwapInterface() {
         };
         checkPool();
     }, []);
+
+    // Check compliance when wallet connects
+    useEffect(() => {
+        const checkCompliance = async () => {
+            if (!publicKey) {
+                setComplianceResult(null);
+                return;
+            }
+            setComplianceChecking(true);
+            try {
+                const result = await checkAddressCompliance(publicKey.toBase58());
+                setComplianceResult(result);
+            } catch (e) {
+                console.warn('Compliance check failed:', e);
+            } finally {
+                setComplianceChecking(false);
+            }
+        };
+        checkCompliance();
+    }, [publicKey]);
 
     // Swap tokens
     const handleSwapTokens = () => {
@@ -190,8 +217,21 @@ function PrivateSwapInterface() {
         const inputAmount = Math.floor(parseFloat(amount) * Math.pow(10, fromToken.decimals));
 
         try {
-            // Step 1: Ensure user has Inco Token accounts
+            // Step 0: Check compliance with Range Protocol
             setStep('authenticating');
+            setStatusMessage('Checking compliance with Range Protocol...');
+            
+            if (!complianceResult) {
+                const result = await checkAddressCompliance(publicKey.toBase58());
+                setComplianceResult(result);
+                if (!result.isCompliant) {
+                    throw new Error(`Compliance check failed: ${result.reasoning}`);
+                }
+            } else if (!complianceResult.isCompliant) {
+                throw new Error(`Compliance check failed: ${complianceResult.reasoning}`);
+            }
+
+            // Step 1: Ensure user has Inco Token accounts
             setStatusMessage('Setting up confidential token accounts...');
             
             const { tokenA: userTokenA, tokenB: userTokenB, created } = await ensureUserIncoAccounts(
@@ -370,6 +410,45 @@ function PrivateSwapInterface() {
                     </>
                 )}
             </div>
+
+            {/* Range Compliance Status */}
+            {connected && (
+                <div className={`rounded-xl p-3 text-xs flex items-center gap-2 ${
+                    complianceChecking ? 'bg-secondary/50' :
+                    complianceResult?.isCompliant ? 'bg-blue-500/10 border border-blue-500/20' :
+                    complianceResult ? 'status-error' :
+                    'bg-secondary/50'
+                }`}>
+                    {complianceChecking && (
+                        <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+                            <span className="text-blue-500">Checking compliance via Range Protocol...</span>
+                        </>
+                    )}
+                    {!complianceChecking && complianceResult?.isCompliant && (
+                        <>
+                            <CheckCircle className="w-3.5 h-3.5 text-blue-500" />
+                            <span className="text-blue-500 font-medium">Range Compliant</span>
+                            <span className="text-blue-500/70">• Risk Score: {complianceResult.riskScore}/10</span>
+                        </>
+                    )}
+                    {!complianceChecking && complianceResult && !complianceResult.isCompliant && (
+                        <>
+                            <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                            <span className="text-red-500 font-medium">
+                                {complianceResult.isSanctioned ? 'Sanctioned Address' : 'High Risk'}
+                            </span>
+                            <span className="text-red-500/70">• Swap Blocked</span>
+                        </>
+                    )}
+                    {!complianceChecking && !complianceResult && (
+                        <>
+                            <Shield className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">Range API: Configure key for compliance</span>
+                        </>
+                    )}
+                </div>
+            )}
 
             {/* Privacy Info */}
             <div className="privacy-badge rounded-xl p-4">
