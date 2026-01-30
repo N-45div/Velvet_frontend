@@ -321,22 +321,35 @@ export async function swapExactIn(params: {
         leafIndex: poolState.leafIndex,
     });
 
-    // Get merkle proof for the existing compressed account
+    // Get validity proof for the existing compressed account (required for state transitions)
     let rootIndex = 0;
     let compressedProof = null;
     
     try {
-        // Use getMultipleCompressedAccountProofs to get the merkle proof
-        const proofs = await lightRpc.getMultipleCompressedAccountProofs([poolState.accountHash]);
-        if (proofs && proofs[0]) {
-            rootIndex = proofs[0].rootIndex || 0;
-            console.log('Got merkle proof, rootIndex:', rootIndex);
-        }
+        // For state transitions on existing compressed accounts, we need getValidityProofV0
+        // with the account hash as input
+        const proofResult = await lightRpc.getValidityProofV0(
+            [{ hash: poolState.accountHash, tree: stateTree, queue: stateQueue }],
+            [] // no new addresses
+        );
         
-        // For V2, we may not need a validity proof for simple state transitions
-        // The merkle proof from getMultipleCompressedAccountProofs is sufficient
+        if (proofResult) {
+            rootIndex = proofResult.rootIndices?.[0] || 0;
+            compressedProof = proofResult.compressedProof;
+            console.log('Got validity proof, rootIndex:', rootIndex);
+        }
     } catch (proofError: any) {
-        console.warn('Failed to get merkle proof:', proofError?.message);
+        console.warn('Failed to get validity proof:', proofError?.message);
+        // Fallback: try getMultipleCompressedAccountProofs
+        try {
+            const proofs = await lightRpc.getMultipleCompressedAccountProofs([poolState.accountHash]);
+            if (proofs && proofs[0]) {
+                rootIndex = proofs[0].rootIndex || 0;
+                console.log('Got merkle proof fallback, rootIndex:', rootIndex);
+            }
+        } catch (e) {
+            console.warn('Fallback proof also failed');
+        }
     }
 
     // Build remaining accounts using the ACTUAL trees from the pool
