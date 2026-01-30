@@ -19,6 +19,7 @@ import {
     type Rpc,
 } from '@lightprotocol/stateless.js';
 import lightSwapIdl from '@/idl/light_swap_psp.json';
+import devnetConfig from '@/config/devnet-config.json';
 
 // Force V2 mode for Light Protocol
 (featureFlags as any).version = VERSION.V2;
@@ -40,6 +41,13 @@ export const LIGHT_OUTPUT_QUEUE = new PublicKey('oq1na8gojfdUhsfCpyjNt6h4JaDWtHf
 
 // Pool authority seed
 const POOL_AUTH_SEED = Buffer.from('pool_authority');
+
+// Devnet Inco Token addresses (from devnet-config.json)
+export const DEVNET_INCO_MINT_A = new PublicKey(devnetConfig.incoMintA); // wSOL-like
+export const DEVNET_INCO_MINT_B = new PublicKey(devnetConfig.incoMintB); // USDC-like
+export const DEVNET_POOL_VAULT_A = new PublicKey(devnetConfig.poolVaultA);
+export const DEVNET_POOL_VAULT_B = new PublicKey(devnetConfig.poolVaultB);
+export const DEVNET_POOL_AUTHORITY = new PublicKey(devnetConfig.poolAuthorityPda);
 
 export interface WalletAdapter {
     publicKey: PublicKey;
