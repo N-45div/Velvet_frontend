@@ -79,7 +79,7 @@ graph LR
 ```bash
 # Clone the repository
 git clone https://github.com/VelvetSwap/Velvet_frontend.git
-cd velvet-rope
+cd velvet_frontend
 
 # Install dependencies
 npm install
@@ -154,29 +154,13 @@ Create `.env.local`:
 # Network (devnet or mainnet-beta)
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
-# Helius RPC (optional - has default)
+# Helius RPC
 NEXT_PUBLIC_HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_KEY
+
+# Range API Key (Compliance Checks)
+NEXT_PUBLIC_RANGE_API_KEY=your_range_api_key_here
+RANGE_API_KEY=your_range_api_key_here
 ```
-
----
-
-## UI Components
-
-### Privacy Toggle
-Click the **Hidden/Visible** badge to toggle privacy mode:
-- **Hidden**: Shows `••••••` instead of amounts
-- **Visible**: Shows calculated output
-
-### Pool Status Indicator
-- 🟢 **Pool Active**: Ready to swap
-- 🟡 **Initializing**: Pool being set up
-- ⚪ **Checking**: Loading status
-
-### Swap Button States
-- **Connect Wallet**: No wallet connected
-- **Execute Private Swap**: Ready to swap
-- **Checking compliance...**: Range API verification
-- **Executing Private Swap...**: Transaction in progress
 
 ---
 
