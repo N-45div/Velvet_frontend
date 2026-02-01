@@ -78,7 +78,7 @@ graph LR
 
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/VelvetSwap/Velvet_frontend.git
 cd velvet-rope
 
 # Install dependencies
@@ -180,48 +180,11 @@ Click the **Hidden/Visible** badge to toggle privacy mode:
 
 ---
 
-## Styling
-
-The UI uses a custom design system with:
-
-- **Velvet Purple** (`#8B5CF6`) as primary color
-- **Glassmorphism** cards with backdrop blur
-- **Glow effects** on buttons and inputs
-- **Smooth animations** for state changes
-
-Custom CSS classes in `globals.css`:
-- `.glass` — Frosted glass effect
-- `.velvet-glow` — Purple outer glow
-- `.btn-glow` — Button hover glow
-- `.token-input` — Input container styling
-- `.privacy-badge` — Purple gradient badge
-- `.status-success` / `.status-warning` — Status indicators
-
----
-
-## Deployment
-
-### Vercel (Recommended)
-
-```bash
-npm run build
-# Then connect to Vercel
-```
-
-### Self-hosted
-
-```bash
-npm run build
-npm start
-```
-
----
-
 ## Related
 
 | Resource | Link |
 |----------|------|
-| **On-Chain Program** | [private_swap_programs](../private_swap_programs) |
+| **On-Chain Program** | [private_swap_programs](https://github.com/VelvetSwap/Velvet_swap_program) |
 | **Inco Lightning** | https://docs.inco.org/svm/home |
 | **Light Protocol** | https://docs.lightprotocol.com |
 | **Range Protocol** | https://docs.range.org |
