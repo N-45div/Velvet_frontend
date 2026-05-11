@@ -1,8 +1,8 @@
-# VelvetSwap Frontend
+# VelvetMesh Frontend
 
 <p align="center">
-  <strong>Privacy-First Confidential Swap Interface for Solana</strong><br/>
-  A beautiful, modern frontend for the VelvetSwap confidential AMM.
+  <strong>Private Intent Trading Frontend for Solana</strong><br/>
+  VelvetMesh turns the swap surface into a private intent flow with Arcium match verification, MagicBlock payment execution, and Umbra shielded payout support.
 </p>
 
 <p align="center">
@@ -15,42 +15,63 @@
 
 ## Overview
 
-VelvetSwap is the frontend interface for the first **fully confidential AMM on Solana**. It connects to the `light_swap_psp` program to execute swaps where amounts, reserves, and fees are all encrypted.
+VelvetMesh is the frontend for a private, devnet-only trade flow on Solana. It does not present itself as a generic sponsor demo. The product story is:
+
+- **Arcium** verifies private quotes and match results.
+- **MagicBlock** executes the private USDC payment leg.
+- **Umbra** shields the wSOL payout balance after settlement.
+- **VelvetSwap** remains the confidential AMM fallback and market reference layer.
+
+The UI shows the live market reference, the private intent lifecycle, and the settlement receipts for each accepted match.
 
 ```mermaid
 graph LR
-    subgraph "Frontend"
-        UI["VelvetSwap UI"]
-        SDK["Swap Client"]
+    subgraph "Client"
+        UI["VelvetMesh UI"]
+        HISTORY["Intent history + receipts"]
     end
 
-    subgraph "Privacy + Compliance"
-        RANGE["Range Protocol"]
-        INCO["Inco FHE + c-SPL"]
-        LIGHT["Light Protocol ZK"]
+    subgraph "Local App Routes"
+        JUP["/api/quotes/jupiter"]
+        CG["/api/market/coingecko"]
+        VM["/api/velvetmesh/*"]
+        MB["/api/magicblock/private-transfer"]
+        UM["/api/umbra/settlement"]
     end
 
-    subgraph "On-Chain"
-        PROGRAM["light_swap_psp"]
+    subgraph "External Rails"
+        ARCIUM["Arcium intent/match boundary"]
+        MAGIC["MagicBlock private payments API"]
+        UMBRA["Umbra devnet SDK"]
+        JUPITER["Jupiter quote reference"]
+        CGECKO["CoinGecko market history"]
     end
 
-    UI --> SDK
-    SDK --> RANGE
-    SDK --> PROGRAM
-    PROGRAM --> INCO
-    PROGRAM --> LIGHT
+    UI --> JUP
+    UI --> CG
+    UI --> VM
+    UI --> MB
+    UI --> UM
+    UI --> HISTORY
+    VM --> ARCIUM
+    MB --> MAGIC
+    UM --> UMBRA
+    JUP --> JUPITER
+    CG --> CGECKO
 ```
 
 ---
 
-## Features
+## What The App Does
 
-- **Triple-Layer Privacy** — FHE encryption + ZK compression + Range compliance
-- **Privacy Mode Toggle** — Show/hide estimated output amounts
-- **Real-time Pool Status** — Checks pool availability on load
-- **Wallet Integration** — Solana Wallet Adapter support
-- **Modern UI** — Glassmorphism, glow effects, smooth animations
-- **Responsive Design** — Works on desktop and mobile
+- Creates a private intent on devnet.
+- Requests or seeds private maker quotes.
+- Requests an Arcium private match.
+- Accepts the selected quote when it becomes match-ready.
+- Settles the USDC leg privately through MagicBlock.
+- Shields the wSOL payout balance through Umbra.
+- Persists receipts and history for the connected wallet.
+- Displays a market chart and quote reference so the flow feels like a product, not an infra toy.
 
 ---
 
@@ -58,109 +79,84 @@ graph LR
 
 | Component | Technology |
 |-----------|------------|
-| **Framework** | Next.js 14 (App Router) |
-| **Styling** | TailwindCSS + Custom CSS |
-| **Wallet** | Solana Wallet Adapter |
-| **Blockchain** | Solana Devnet |
-| **Privacy** | Inco FHE, Light Protocol ZK, Range Compliance |
-| **RPC** | Helius (with Light Protocol indexer) |
+| Framework | Next.js 14 App Router |
+| Styling | TailwindCSS + custom CSS |
+| Wallets | Solana Wallet Adapter |
+| Chain | Solana Devnet |
+| Quote reference | Jupiter + CoinGecko |
+| Private payment rail | MagicBlock Private Payments API |
+| Shielded payout rail | Umbra SDK |
+| Match boundary | Arcium-backed intent flow |
 
 ---
 
-## Quick Start
+## Local Setup
 
 ### Prerequisites
 
 - Node.js 18+
-- A Solana wallet (Phantom, Solflare, etc.)
+- A Solana devnet wallet in Phantom, Solflare, or Backpack
+- Devnet SOL for testing
 
-### Installation
+### Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/VelvetSwap/Velvet_frontend.git
-cd velvet_frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see VelvetSwap.
+Open [http://localhost:3000](http://localhost:3000).
 
----
-
-## Swap Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI as VelvetSwap
-    participant Range as Range Protocol
-    participant Program as light_swap_psp
-    participant Inco as Inco Lightning
-    participant Light as Light Protocol
-
-    User->>UI: Connect wallet
-    UI->>Range: Check compliance (risk score)
-    Range-->>UI: {riskScore: 1, compliant: true}
-    
-    User->>UI: Enter swap amount (0.03 SOL)
-    UI->>UI: Encrypt amounts (FHE)
-    UI->>Light: Fetch pool state + validity proof
-    Light-->>UI: Compressed pool data
-    
-    UI->>Program: swap_exact_in(encrypted_amounts)
-    Program->>Inco: FHE math on reserves
-    Program->>Inco: Confidential token transfers
-    Program->>Light: Commit updated pool state
-    Program-->>UI: Transaction signature
-    UI-->>User: "Private swap completed!"
-```
-
----
-
-## Project Structure
-
-```
-velvet-rope/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx         # Main swap interface
-│   │   ├── layout.tsx       # Root layout with providers
-│   │   └── globals.css      # Tailwind + custom styles
-│   ├── components/
-│   │   └── providers.tsx    # Wallet & connection providers
-│   ├── lib/
-│   │   ├── swap-client.ts   # Program interaction SDK
-│   │   └── solana/
-│   │       └── constants.ts # Program IDs, mints, etc.
-│   └── idl/
-│       └── light_swap_psp.json  # Program IDL
-├── public/
-├── tailwind.config.ts
-└── package.json
-```
-
----
-
-## Environment Variables
+### Environment
 
 Create `.env.local`:
 
 ```env
-# Network (devnet or mainnet-beta)
-NEXT_PUBLIC_SOLANA_NETWORK=devnet
-
-# Helius RPC
 NEXT_PUBLIC_HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_KEY
-
-# Range API Key (Compliance Checks)
-NEXT_PUBLIC_RANGE_API_KEY=your_range_api_key_here
-RANGE_API_KEY=your_range_api_key_here
+UMBRA_SOLANA_WS_URL=wss://devnet.helius-rpc.com/?api-key=YOUR_KEY
+UMBRA_SETTLEMENT_PRIVATE_KEY=[1,2,3,...,64]
 ```
+
+The Umbra signer must stay local and ignored by git. The app fails closed if the settlement config is missing.
+
+---
+
+## User Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as VelvetMesh UI
+    participant VM as VelvetMesh API
+    participant Arcium
+    participant MagicBlock
+    participant Umbra
+
+    User->>UI: Connect wallet
+    User->>UI: Create private intent
+    UI->>VM: Store intent + settlement plan
+    User->>UI: Request private match
+    UI->>Arcium: Match boundary and quote selection
+    Arcium-->>UI: Match-ready result
+    User->>UI: Accept quote
+    User->>MagicBlock: Private USDC payment
+    MagicBlock-->>UI: Tx signature
+    User->>Umbra: Shield wSOL payout
+    Umbra-->>UI: Queue + callback signatures
+    UI-->>User: Receipt recorded in intent history
+```
+
+---
+
+## Files Worth Knowing
+
+- `src/app/page.tsx`: main UI and flow orchestration.
+- `src/app/api/velvetmesh/*`: private intent and history endpoints.
+- `src/app/api/magicblock/private-transfer/route.ts`: MagicBlock settlement route.
+- `src/app/api/umbra/settlement/route.ts`: Umbra shielding route.
+- `src/lib/velvet-mesh-client.ts`: private intent client.
+- `src/lib/magicblock-private-payments.ts`: MagicBlock client.
+- `src/lib/umbra-settlement.ts`: Umbra devnet settlement helpers.
 
 ---
 
@@ -168,20 +164,13 @@ RANGE_API_KEY=your_range_api_key_here
 
 | Resource | Link |
 |----------|------|
-| **On-Chain Program** | [private_swap_programs](https://github.com/VelvetSwap/Velvet_swap_program) |
-| **Inco Lightning** | https://docs.inco.org/svm/home |
-| **Light Protocol** | https://docs.lightprotocol.com |
-| **Range Protocol** | https://docs.range.org |
-| **Helius RPC** | https://helius.dev |
+| VelvetMesh program repo | [Velvet_swap_program](https://github.com/VelvetSwap/Velvet_swap_program) |
+| MagicBlock docs | https://docs.magicblock.gg/ |
+| Umbra docs | https://docs.umbra.cash/ |
+| Solana Explorer | https://explorer.solana.com |
 
 ---
 
 ## License
 
 MIT
-
----
-
-<p align="center">
-  Built for <strong>Solana Privacy Hackathon 2026</strong> 🏴‍☠️
-</p>

@@ -14,6 +14,7 @@ import {
     selectMinCompressedTokenAccountsForTransfer,
     type TokenTransferOutputData,
 } from '@lightprotocol/compressed-token';
+import { getDevnetRpcUrl } from '@/lib/solana/rpc';
 
 export type CompressedTransferInputs = {
     rpc: Rpc;
@@ -39,18 +40,7 @@ export type CompressedTransferBundle = {
 };
 
 export const createDevnetLightRpc = () => {
-    const apiKey = process.env.NEXT_PUBLIC_HELIUS_DEVNET_API_KEY;
-    const rpcUrl =
-        process.env.NEXT_PUBLIC_HELIUS_DEVNET_RPC_URL ??
-        (apiKey ? `https://devnet.helius-rpc.com/?api-key=${apiKey}` : undefined);
-
-    if (!rpcUrl) {
-        throw new Error(
-            'Missing Helius devnet RPC URL. Set NEXT_PUBLIC_HELIUS_DEVNET_RPC_URL or NEXT_PUBLIC_HELIUS_DEVNET_API_KEY.',
-        );
-    }
-
-    return createRpc(rpcUrl);
+    return createRpc(getDevnetRpcUrl());
 };
 
 const ensureInputs = (inputAccounts: ParsedTokenAccount[]) => {

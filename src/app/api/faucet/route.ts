@@ -22,6 +22,10 @@ import {
     ComputeBudgetProgram,
 } from '@solana/web3.js';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
+import { getDevnetRpcUrl } from '@/lib/solana/rpc';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Constants
 const INCO_LIGHTNING_PROGRAM_ID = new PublicKey('5sjEbPiqgZrYwR31ahR6Uk9wf5awoX61YGg7jExQSwaj');
@@ -30,9 +34,7 @@ const INCO_MINT_A = new PublicKey('4AJDgxnHDNP7y9wSD24sP7YUhQrMyprLUeuRwEwYu6cy'
 const INCO_MINT_B = new PublicKey('CvymLX1Tm6btpRJdfGeQ34k726yQnXSn1V7G4fworMaG');
 const INPUT_TYPE = 0;
 
-const RPC_URL = process.env.HELIUS_DEVNET_API_KEY
-    ? `https://devnet.helius-rpc.com/?api-key=${process.env.HELIUS_DEVNET_API_KEY}`
-    : 'https://api.devnet.solana.com';
+const RPC_URL = getDevnetRpcUrl();
 
 function getDeployerKeypair(): Keypair {
     const key = process.env.DEPLOYER_PRIVATE_KEY;
