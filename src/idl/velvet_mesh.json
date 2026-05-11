@@ -1,0 +1,1667 @@
+{
+  "address": "4GPgiWJN1WRifSvEVs8btvyq7Yinn6DNErnuyXDRHFFo",
+  "metadata": {
+    "name": "velvet_mesh",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Private intent/RFQ layer for VelvetMesh by VelvetSwap"
+  },
+  "instructions": [
+    {
+      "name": "accept_quote",
+      "discriminator": [
+        129,
+        61,
+        5,
+        81,
+        46,
+        253,
+        210,
+        152
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "intent"
+          ]
+        },
+        {
+          "name": "intent",
+          "writable": true
+        },
+        {
+          "name": "quote",
+          "writable": true
+        },
+        {
+          "name": "accepted_match",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  116,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "intent"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel_intent",
+      "discriminator": [
+        67,
+        73,
+        238,
+        244,
+        208,
+        89,
+        225,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "intent"
+          ]
+        },
+        {
+          "name": "intent",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_intent",
+      "discriminator": [
+        216,
+        214,
+        79,
+        121,
+        23,
+        194,
+        96,
+        104
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "intent",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  116,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "intent_nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "intent_nonce",
+          "type": "u64"
+        },
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "CreateIntentParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "mark_settlement_ready",
+      "discriminator": [
+        82,
+        14,
+        123,
+        229,
+        24,
+        155,
+        112,
+        90
+      ],
+      "accounts": [
+        {
+          "name": "settlement_verifier",
+          "signer": true,
+          "relations": [
+            "accepted_match",
+            "settlement_handoff"
+          ]
+        },
+        {
+          "name": "accepted_match",
+          "writable": true,
+          "relations": [
+            "settlement_handoff"
+          ]
+        },
+        {
+          "name": "settlement_handoff",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  116,
+                  116,
+                  108,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "accepted_match"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "prepare_settlement_handoff",
+      "discriminator": [
+        206,
+        46,
+        244,
+        182,
+        101,
+        145,
+        196,
+        247
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "accepted_match"
+          ]
+        },
+        {
+          "name": "accepted_match",
+          "writable": true
+        },
+        {
+          "name": "settlement_handoff",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  116,
+                  116,
+                  108,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "accepted_match"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "PrepareSettlementHandoffParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "record_private_match",
+      "discriminator": [
+        75,
+        231,
+        215,
+        146,
+        146,
+        222,
+        168,
+        222
+      ],
+      "accounts": [
+        {
+          "name": "match_verifier",
+          "signer": true,
+          "relations": [
+            "intent"
+          ]
+        },
+        {
+          "name": "intent",
+          "writable": true
+        },
+        {
+          "name": "selected_quote"
+        }
+      ],
+      "args": [
+        {
+          "name": "arcium_computation",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "selected_quote_commitment",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "selected_route",
+          "type": {
+            "defined": {
+              "name": "SettlementRoute"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "request_private_match",
+      "discriminator": [
+        235,
+        107,
+        255,
+        77,
+        136,
+        67,
+        168,
+        169
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "intent"
+          ]
+        },
+        {
+          "name": "intent",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "arcium_computation",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "submit_quote",
+      "discriminator": [
+        230,
+        121,
+        122,
+        202,
+        228,
+        6,
+        91,
+        181
+      ],
+      "accounts": [
+        {
+          "name": "maker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "intent",
+          "writable": true
+        },
+        {
+          "name": "quote",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  113,
+                  117,
+                  111,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "intent"
+              },
+              {
+                "kind": "account",
+                "path": "maker"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "SubmitQuoteParams"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AcceptedMatch",
+      "discriminator": [
+        20,
+        92,
+        254,
+        60,
+        113,
+        66,
+        37,
+        14
+      ]
+    },
+    {
+      "name": "Intent",
+      "discriminator": [
+        247,
+        162,
+        35,
+        165,
+        254,
+        111,
+        129,
+        109
+      ]
+    },
+    {
+      "name": "Quote",
+      "discriminator": [
+        167,
+        202,
+        20,
+        198,
+        228,
+        66,
+        105,
+        208
+      ]
+    },
+    {
+      "name": "SettlementHandoff",
+      "discriminator": [
+        162,
+        155,
+        35,
+        7,
+        227,
+        1,
+        47,
+        65
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "IntentCancelled",
+      "discriminator": [
+        39,
+        174,
+        74,
+        165,
+        39,
+        101,
+        119,
+        29
+      ]
+    },
+    {
+      "name": "IntentCreated",
+      "discriminator": [
+        184,
+        46,
+        156,
+        205,
+        169,
+        254,
+        11,
+        108
+      ]
+    },
+    {
+      "name": "PrivateMatchReady",
+      "discriminator": [
+        226,
+        125,
+        38,
+        4,
+        134,
+        62,
+        209,
+        29
+      ]
+    },
+    {
+      "name": "PrivateMatchRequested",
+      "discriminator": [
+        231,
+        244,
+        179,
+        63,
+        149,
+        170,
+        93,
+        211
+      ]
+    },
+    {
+      "name": "QuoteAccepted",
+      "discriminator": [
+        42,
+        119,
+        34,
+        181,
+        186,
+        44,
+        49,
+        55
+      ]
+    },
+    {
+      "name": "QuoteSubmitted",
+      "discriminator": [
+        207,
+        98,
+        251,
+        106,
+        249,
+        124,
+        126,
+        40
+      ]
+    },
+    {
+      "name": "SettlementHandoffPrepared",
+      "discriminator": [
+        96,
+        143,
+        72,
+        49,
+        60,
+        131,
+        23,
+        169
+      ]
+    },
+    {
+      "name": "SettlementReady",
+      "discriminator": [
+        153,
+        48,
+        96,
+        59,
+        248,
+        7,
+        119,
+        35
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAssetPair",
+      "msg": "Input and output assets must differ"
+    },
+    {
+      "code": 6001,
+      "name": "NoSettlementRoutes",
+      "msg": "Intent must allow at least one settlement route"
+    },
+    {
+      "code": 6002,
+      "name": "IntentExpired",
+      "msg": "Intent has expired"
+    },
+    {
+      "code": 6003,
+      "name": "QuoteExpired",
+      "msg": "Quote has expired"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidQuoteCount",
+      "msg": "Invalid minimum quote count"
+    },
+    {
+      "code": 6005,
+      "name": "IntentNotOpen",
+      "msg": "Intent is not open"
+    },
+    {
+      "code": 6006,
+      "name": "RouteNotAllowed",
+      "msg": "Settlement route is not allowed by the intent"
+    },
+    {
+      "code": 6007,
+      "name": "TooManyQuotes",
+      "msg": "Intent has too many quotes"
+    },
+    {
+      "code": 6008,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6009,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6010,
+      "name": "NotEnoughQuotes",
+      "msg": "Not enough quotes have been submitted"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidComputeProvider",
+      "msg": "Invalid compute provider for this instruction"
+    },
+    {
+      "code": 6012,
+      "name": "ComputationNotRequested",
+      "msg": "Computation has not been requested"
+    },
+    {
+      "code": 6013,
+      "name": "QuoteIntentMismatch",
+      "msg": "Quote does not belong to intent"
+    },
+    {
+      "code": 6014,
+      "name": "QuoteMismatch",
+      "msg": "Private match selected a different quote"
+    },
+    {
+      "code": 6015,
+      "name": "IntentNotAcceptable",
+      "msg": "Intent is not acceptable"
+    },
+    {
+      "code": 6016,
+      "name": "IntentNotCancellable",
+      "msg": "Intent is not cancellable"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidMatchVerifier",
+      "msg": "Arcium-backed intents require a non-default match verifier"
+    },
+    {
+      "code": 6018,
+      "name": "ComputationMismatch",
+      "msg": "Arcium computation does not match the requested computation"
+    },
+    {
+      "code": 6019,
+      "name": "RouteMismatch",
+      "msg": "Selected route does not match the quote route"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidSettlementVerifier",
+      "msg": "Sponsor settlement handoff requires a non-default settlement verifier"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidSettlementPayload",
+      "msg": "Settlement payload hash must be non-zero"
+    },
+    {
+      "code": 6022,
+      "name": "SettlementAlreadyPrepared",
+      "msg": "Settlement handoff has already been prepared"
+    },
+    {
+      "code": 6023,
+      "name": "SettlementAlreadyConfirmed",
+      "msg": "Settlement handoff has already been confirmed"
+    },
+    {
+      "code": 6024,
+      "name": "SettlementNotPrepared",
+      "msg": "Settlement handoff is not prepared"
+    }
+  ],
+  "types": [
+    {
+      "name": "AcceptedMatch",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          },
+          {
+            "name": "quote",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "route",
+            "type": {
+              "defined": {
+                "name": "SettlementRoute"
+              }
+            }
+          },
+          {
+            "name": "settlement_verifier",
+            "type": "pubkey"
+          },
+          {
+            "name": "settlement_provider",
+            "type": {
+              "defined": {
+                "name": "SettlementProvider"
+              }
+            }
+          },
+          {
+            "name": "settlement_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "settlement_payload_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "settlement_reference_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "arcium_computation",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "accepted_at",
+            "type": "i64"
+          },
+          {
+            "name": "settlement_prepared_at",
+            "type": "i64"
+          },
+          {
+            "name": "settlement_confirmed_at",
+            "type": "i64"
+          },
+          {
+            "name": "settlement_ready",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputeProvider",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Arcium"
+          },
+          {
+            "name": "Encrypt"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateIntentParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "input_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "output_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_size",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_limit_price",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_slippage_bps",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_risk_preference",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "allowed_routes",
+            "type": "u8"
+          },
+          {
+            "name": "compute_provider",
+            "type": {
+              "defined": {
+                "name": "ComputeProvider"
+              }
+            }
+          },
+          {
+            "name": "match_verifier",
+            "type": "pubkey"
+          },
+          {
+            "name": "settlement_verifier",
+            "type": "pubkey"
+          },
+          {
+            "name": "min_quote_count",
+            "type": "u8"
+          },
+          {
+            "name": "metadata_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Intent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "intent_nonce",
+            "type": "u64"
+          },
+          {
+            "name": "input_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "output_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_size",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_limit_price",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_slippage_bps",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_risk_preference",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "allowed_routes",
+            "type": "u8"
+          },
+          {
+            "name": "compute_provider",
+            "type": {
+              "defined": {
+                "name": "ComputeProvider"
+              }
+            }
+          },
+          {
+            "name": "match_verifier",
+            "type": "pubkey"
+          },
+          {
+            "name": "settlement_verifier",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "IntentStatus"
+              }
+            }
+          },
+          {
+            "name": "min_quote_count",
+            "type": "u8"
+          },
+          {
+            "name": "quote_count",
+            "type": "u8"
+          },
+          {
+            "name": "selected_quote",
+            "type": "pubkey"
+          },
+          {
+            "name": "accepted_match",
+            "type": "pubkey"
+          },
+          {
+            "name": "arcium_computation",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "metadata_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IntentCancelled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IntentCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "compute_provider",
+            "type": {
+              "defined": {
+                "name": "ComputeProvider"
+              }
+            }
+          },
+          {
+            "name": "allowed_routes",
+            "type": "u8"
+          },
+          {
+            "name": "settlement_verifier",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IntentStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "ComputationRequested"
+          },
+          {
+            "name": "MatchReady"
+          },
+          {
+            "name": "Accepted"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Expired"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrepareSettlementHandoffParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "provider",
+            "type": {
+              "defined": {
+                "name": "SettlementProvider"
+              }
+            }
+          },
+          {
+            "name": "payload_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reference_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivateMatchReady",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          },
+          {
+            "name": "selected_quote",
+            "type": "pubkey"
+          },
+          {
+            "name": "route",
+            "type": {
+              "defined": {
+                "name": "SettlementRoute"
+              }
+            }
+          },
+          {
+            "name": "arcium_computation",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "selected_quote_commitment",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivateMatchRequested",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          },
+          {
+            "name": "arcium_computation",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Quote",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "route",
+            "type": {
+              "defined": {
+                "name": "SettlementRoute"
+              }
+            }
+          },
+          {
+            "name": "encrypted_output_amount",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_price_bps",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_maker_risk",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "quote_commitment",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "settlement_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "accepted",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "QuoteAccepted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          },
+          {
+            "name": "quote",
+            "type": "pubkey"
+          },
+          {
+            "name": "accepted_match",
+            "type": "pubkey"
+          },
+          {
+            "name": "route",
+            "type": {
+              "defined": {
+                "name": "SettlementRoute"
+              }
+            }
+          },
+          {
+            "name": "settlement_verifier",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "QuoteSubmitted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "intent",
+            "type": "pubkey"
+          },
+          {
+            "name": "quote",
+            "type": "pubkey"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "route",
+            "type": {
+              "defined": {
+                "name": "SettlementRoute"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettlementHandoff",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "accepted_match",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "settlement_verifier",
+            "type": "pubkey"
+          },
+          {
+            "name": "provider",
+            "type": {
+              "defined": {
+                "name": "SettlementProvider"
+              }
+            }
+          },
+          {
+            "name": "payload_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reference_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "SettlementHandoffStatus"
+              }
+            }
+          },
+          {
+            "name": "prepared_at",
+            "type": "i64"
+          },
+          {
+            "name": "confirmed_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettlementHandoffPrepared",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "accepted_match",
+            "type": "pubkey"
+          },
+          {
+            "name": "provider",
+            "type": {
+              "defined": {
+                "name": "SettlementProvider"
+              }
+            }
+          },
+          {
+            "name": "payload_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reference_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "settlement_verifier",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettlementHandoffStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Prepared"
+          },
+          {
+            "name": "Confirmed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettlementProvider",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "DirectSolana"
+          },
+          {
+            "name": "VelvetSwapFallback"
+          },
+          {
+            "name": "UmbraShieldedPayout"
+          },
+          {
+            "name": "MagicBlockPrivatePayment"
+          },
+          {
+            "name": "JupiterFallback"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettlementReady",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "accepted_match",
+            "type": "pubkey"
+          },
+          {
+            "name": "provider",
+            "type": {
+              "defined": {
+                "name": "SettlementProvider"
+              }
+            }
+          },
+          {
+            "name": "settlement_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "payload_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reference_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettlementRoute",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "DirectSolanaP2p"
+          },
+          {
+            "name": "VelvetSwapFallback"
+          },
+          {
+            "name": "IkaBridgeless"
+          },
+          {
+            "name": "JupiterFallback"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SubmitQuoteParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "route",
+            "type": {
+              "defined": {
+                "name": "SettlementRoute"
+              }
+            }
+          },
+          {
+            "name": "encrypted_output_amount",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_price_bps",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_maker_risk",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "quote_commitment",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "settlement_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}
