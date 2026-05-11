@@ -127,6 +127,12 @@ function outputAmountToAtoms(outputAmount: string, outputSymbol: string) {
     return BigInt(Math.max(1, Math.floor(parsed * 10 ** decimals)));
 }
 
+function mintForSymbol(symbol: string) {
+    if (symbol === 'USDC') return DEVNET_TEST_USDC_MINT;
+    if (symbol === 'SOL') return DEVNET_WSOL_MINT;
+    throw new Error(`Unsupported VelvetMesh token symbol: ${symbol}`);
+}
+
 function formatQuoteAmountForIndex(outputAmount: string, index: number) {
     const parsed = Number(outputAmount);
     if (!Number.isFinite(parsed) || parsed <= 0) return outputAmount;
@@ -258,8 +264,8 @@ export async function createVelvetMeshIntent(input: {
 
     const signature = await program.methods
         .createIntent(intentNonce, {
-            inputMint: DEVNET_WSOL_MINT,
-            outputMint: DEVNET_TEST_USDC_MINT,
+            inputMint: mintForSymbol(input.inputSymbol),
+            outputMint: mintForSymbol(input.outputSymbol),
             encryptedSize: privacy.encryptedSize,
             encryptedLimitPrice: privacy.encryptedLimitPrice,
             encryptedSlippageBps: privacy.encryptedSlippageBps,

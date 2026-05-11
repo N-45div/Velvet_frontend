@@ -67,7 +67,7 @@ const WalletMultiButton = dynamic(
     { ssr: false, loading: () => <div className="h-10 w-32 bg-secondary rounded-lg animate-pulse" /> }
 );
 
-type SwapStep = 'idle' | 'authenticating' | 'intenting' | 'swapping' | 'complete' | 'error';
+type SwapStep = 'idle' | 'authenticating' | 'intenting' | 'swapping' | 'pending' | 'complete' | 'error';
 
 type JupiterQuote = {
     source: string;
@@ -591,7 +591,7 @@ function TradeProgressPanel({
                 <div>
                     <div className="font-mono text-[11px] uppercase tracking-[0.24em] opacity-70">Trade progress</div>
                     <h3 className="mt-1 text-xl font-semibold tracking-[-0.04em] text-slate-950">
-                        {step === 'complete' ? 'Settlement complete' : step === 'error' ? 'Action needs attention' : 'Execution in progress'}
+                        {step === 'complete' ? 'Settlement complete' : step === 'pending' ? 'Match pending' : step === 'error' ? 'Action needs attention' : 'Execution in progress'}
                     </h3>
                 </div>
                 {(step === 'complete' || step === 'error') && (
@@ -661,6 +661,7 @@ function IntentHistoryPanel({
     magicBlockSettlingIntent,
     umbraShieldingIntent,
     settlementReceipts,
+    settlementPlans,
 }: {
     connected: boolean;
     intents: VelvetMeshIntentHistoryItem[];
@@ -680,7 +681,14 @@ function IntentHistoryPanel({
     magicBlockSettlingIntent: string | null;
     umbraShieldingIntent: string | null;
     settlementReceipts: Record<string, SettlementReceipt>;
+    settlementPlans: Record<string, SettlementPlan>;
 }) {
+    const hasTwoRailPlan = (intent: VelvetMeshIntentHistoryItem) => {
+        const plan = settlementPlans[intent.address];
+        return (intent.inputSymbol === 'USDC' && intent.outputSymbol === 'SOL')
+            || (plan?.inputSymbol === 'USDC' && plan.outputSymbol === 'SOL');
+    };
+
     return (
         <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-start justify-between gap-4">
@@ -715,7 +723,7 @@ function IntentHistoryPanel({
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <div className="text-sm font-semibold text-slate-950">
-                                        {intent.inputSymbol} / {intent.outputSymbol}
+                                        {settlementPlans[intent.address]?.inputSymbol ?? intent.inputSymbol} / {settlementPlans[intent.address]?.outputSymbol ?? intent.outputSymbol}
                                     </div>
                                     <div className="mt-1 font-mono text-[11px] text-slate-500">
                                         {shortAddress(intent.address)} · nonce {intent.nonce}
@@ -823,7 +831,7 @@ function IntentHistoryPanel({
                                         {acceptingIntent === intent.address ? 'Accepting quote...' : 'Accept selected quote'}
                                     </button>
                                 )}
-                                {intent.status === 'Accepted' && intent.selectedQuote && intent.inputSymbol === 'USDC' && intent.outputSymbol === 'SOL' && (
+                                {intent.status === 'Accepted' && intent.selectedQuote && hasTwoRailPlan(intent) && (
                                     <button
                                         onClick={() => onTwoRailSettle(intent)}
                                         disabled={magicBlockSettlingIntent === intent.address || umbraShieldingIntent === intent.address}
@@ -834,7 +842,7 @@ function IntentHistoryPanel({
                                             : 'Settle USDC + shield wSOL'}
                                     </button>
                                 )}
-                                {intent.status === 'Accepted' && intent.selectedQuote && intent.inputSymbol === 'USDC' && intent.outputSymbol === 'SOL' && (
+                                {intent.status === 'Accepted' && intent.selectedQuote && hasTwoRailPlan(intent) && (
                                     <button
                                         onClick={() => onMagicBlockSettle(intent)}
                                         disabled={magicBlockSettlingIntent === intent.address}
@@ -843,7 +851,7 @@ function IntentHistoryPanel({
                                         {magicBlockSettlingIntent === intent.address ? 'Paying USDC...' : 'MagicBlock USDC leg'}
                                     </button>
                                 )}
-                                {intent.status === 'Accepted' && intent.selectedQuote && intent.inputSymbol === 'USDC' && intent.outputSymbol === 'SOL' && (
+                                {intent.status === 'Accepted' && intent.selectedQuote && hasTwoRailPlan(intent) && (
                                     <button
                                         onClick={() => onUmbraShield(intent)}
                                         disabled={umbraShieldingIntent === intent.address}
@@ -852,7 +860,7 @@ function IntentHistoryPanel({
                                         {umbraShieldingIntent === intent.address ? 'Shielding wSOL...' : 'Umbra wSOL payout'}
                                     </button>
                                 )}
-                                {intent.status === 'Accepted' && intent.selectedQuote && (intent.inputSymbol !== 'USDC' || intent.outputSymbol !== 'SOL') && (
+                                {intent.status === 'Accepted' && intent.selectedQuote && !hasTwoRailPlan(intent) && (
                                     <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-500">
                                         Two-rail settlement needs USDC to SOL
                                     </span>
@@ -1522,7 +1530,7 @@ function PrivateSwapInterface({
 
             setTxSignature(result.finalizationSignature ?? result.matcherSignature ?? result.signature);
             setIntentHistoryRefreshKey((key) => key + 1);
-            setStep('complete');
+            setStep(result.finalizationWarning ? 'pending' : 'complete');
             setStatusMessage(result.finalizationWarning
                 ? `Arcium matcher queued for ${shortAddress(intent.address)}; finalization is still pending.`
                 : `Arcium private match finalized for ${shortAddress(intent.address)}.`);
@@ -1577,11 +1585,6 @@ function PrivateSwapInterface({
     };
 
     const getTwoRailSettlementAmounts = (intent: VelvetMeshIntentHistoryItem) => {
-        if (intent.inputSymbol !== 'USDC' || intent.outputSymbol !== 'SOL') {
-            return null;
-        }
-
-        const selectedQuoteInput = intent.selectedQuote ? matcherQuoteInputs[intent.selectedQuote] : null;
         const currentPlan = settlementPlans[intent.address]
             ?? buildUsdcToWsolSettlementPlan({
                 inputSymbol: intent.inputSymbol,
@@ -1590,10 +1593,11 @@ function PrivateSwapInterface({
                 outputAmountUi: jupiterQuote?.outAmountUi || estimatedOutput,
             });
 
-        if (!currentPlan) {
+        if (currentPlan?.inputSymbol !== 'USDC' || currentPlan.outputSymbol !== 'SOL') {
             return null;
         }
 
+        const selectedQuoteInput = intent.selectedQuote ? matcherQuoteInputs[intent.selectedQuote] : null;
         const usdcBaseUnits = currentPlan.usdcBaseUnits;
         const wsolBaseUnits = selectedQuoteInput?.outputAmountAtoms
             ? Math.max(1, Number(selectedQuoteInput.outputAmountAtoms))
@@ -2038,7 +2042,7 @@ function PrivateSwapInterface({
         }
     };
 
-    const isProcessing = !['idle', 'complete', 'error'].includes(step);
+    const isProcessing = !['idle', 'pending', 'complete', 'error'].includes(step);
     const canSwap = connected && amount && parseFloat(amount) > 0 && !isProcessing;
 
     return (
@@ -2313,6 +2317,7 @@ function PrivateSwapInterface({
                     magicBlockSettlingIntent={magicBlockSettlingIntent}
                     umbraShieldingIntent={umbraShieldingIntent}
                     settlementReceipts={settlementReceipts}
+                    settlementPlans={settlementPlans}
                 />
             </div>
         </div>
