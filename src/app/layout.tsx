@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // Using Inter for clean, modern look.
+import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AppWalletProvider } from "../components/providers/WalletProvider";
 
-const inter = Inter({ subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({
+    subsets: ["latin"],
+    variable: "--font-display",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+    subsets: ["latin"],
+    weight: ["400", "500", "600"],
+    variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
-    title: "VelvetSwap | Confidential Swaps on Solana",
-    description: "Encrypted swaps powered by Inco Lightning + MagicBlock PER",
+    title: "VelvetMesh | Private Intents on Solana",
+    description: "A privacy-first trading surface for devnet intents, live quotes, and protected settlement routes.",
 };
 
 export default function RootLayout({
@@ -16,8 +25,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className="dark">
-            <body className={inter.className}>
+        <html lang="en">
+            <body className={`${spaceGrotesk.variable} ${ibmPlexMono.variable}`}>
                 <AppWalletProvider>
                     {children}
                 </AppWalletProvider>

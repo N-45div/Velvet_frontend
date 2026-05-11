@@ -22,6 +22,7 @@ import {
 } from '@lightprotocol/stateless.js';
 import lightSwapIdl from '@/idl/light_swap_psp.json';
 import devnetConfig from '@/config/devnet-config.json';
+import { getDevnetRpcUrl } from '@/lib/solana/rpc';
 
 // Force V2 mode for Light Protocol
 (featureFlags as any).version = VERSION.V2;
@@ -114,14 +115,12 @@ export function getSwapProgram(connection: Connection, wallet: WalletAdapter): P
     return new Program(lightSwapIdl as Idl, provider);
 }
 
-// Helius devnet RPC (public)
-const HELIUS_DEVNET_RPC = 'https://devnet.helius-rpc.com/?api-key=2d8978c6-7067-459f-ae97-7ea035f1a0cb';
-
 /**
  * Create Light RPC client for validity proofs
  */
 export function createLightRpc(): Rpc {
-    return createRpc(HELIUS_DEVNET_RPC, HELIUS_DEVNET_RPC);
+    const endpoint = getDevnetRpcUrl();
+    return createRpc(endpoint, endpoint);
 }
 
 /**

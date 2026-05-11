@@ -113,11 +113,10 @@ export async function checkAddressCompliance(
         };
     } catch (error) {
         console.error('Range compliance check failed:', error);
-        // Fail open for demo purposes - in production, consider failing closed
         return {
-            isCompliant: true,
-            riskScore: 0,
-            riskLevel: "Very low risk",
+            isCompliant: false,
+            riskScore: 100,
+            riskLevel: "CRITICAL RISK (Directly malicious)",
             reasoning: `Compliance check failed: ${error}`,
             isSanctioned: false,
             maliciousConnections: [],

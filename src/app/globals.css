@@ -4,65 +4,65 @@
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 222.2 84% 4.9%;
+        --background: 210 40% 98%;
+        --foreground: 222 47% 11%;
 
         --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
+        --card-foreground: 222 47% 11%;
 
         --popover: 0 0% 100%;
-        --popover-foreground: 222.2 84% 4.9%;
+        --popover-foreground: 222 47% 11%;
 
-        --primary: 222.2 47.4% 11.2%;
-        --primary-foreground: 210 40% 98%;
+        --primary: 158 64% 45%;
+        --primary-foreground: 0 0% 100%;
 
-        --secondary: 210 40% 96.1%;
-        --secondary-foreground: 222.2 47.4% 11.2%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
 
-        --muted: 210 40% 96.1%;
-        --muted-foreground: 215.4 16.3% 46.9%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 18% 47%;
 
-        --accent: 210 40% 96.1%;
-        --accent-foreground: 222.2 47.4% 11.2%;
+        --accent: 166 70% 95%;
+        --accent-foreground: 166 70% 22%;
 
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 210 40% 98%;
 
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 222.2 84% 4.9%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 158 64% 45%;
 
-        --radius: 0.5rem;
+        --radius: 1.25rem;
     }
 
     .dark {
-        --background: 222 47% 5%;
-        --foreground: 0 0% 98%;
+        --background: 210 40% 98%;
+        --foreground: 222 47% 11%;
 
-        --card: 222 47% 7%;
-        --card-foreground: 0 0% 98%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
 
-        --popover: 222 47% 7%;
-        --popover-foreground: 0 0% 98%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
 
-        --primary: 263 70% 58%;
+        --primary: 158 64% 45%;
         --primary-foreground: 0 0% 100%;
 
-        --secondary: 222 30% 12%;
-        --secondary-foreground: 0 0% 98%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
 
-        --muted: 222 30% 14%;
-        --muted-foreground: 222 20% 55%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 18% 47%;
 
-        --accent: 263 50% 25%;
-        --accent-foreground: 0 0% 98%;
+        --accent: 166 70% 95%;
+        --accent-foreground: 166 70% 22%;
 
         --destructive: 0 72% 51%;
         --destructive-foreground: 0 0% 98%;
 
-        --border: 222 30% 18%;
-        --input: 222 30% 15%;
-        --ring: 263 70% 58%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 158 64% 45%;
     }
 }
 
@@ -72,79 +72,136 @@
     }
 
     body {
-        @apply bg-background text-foreground font-sans antialiased;
-        background-image: 
-            radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 80, 255, 0.15) 0%, transparent 50%),
-            radial-gradient(ellipse 60% 40% at 100% 50%, rgba(80, 40, 180, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse 60% 40% at 0% 80%, rgba(60, 20, 140, 0.06) 0%, transparent 50%);
+        @apply bg-background text-foreground antialiased;
+        font-family: var(--font-display), "Space Grotesk", sans-serif;
     }
 }
 
 /* Glassmorphism Utilities */
 @layer utilities {
     .glass {
-        @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08];
+        @apply border border-white/[0.10] bg-white/[0.055] backdrop-blur-2xl;
     }
 
     .velvet-glow {
         box-shadow: 
-            0 0 60px -15px rgba(139, 92, 246, 0.25),
-            0 0 30px -10px rgba(139, 92, 246, 0.15);
+            0 0 80px -28px rgba(110, 231, 183, 0.72),
+            0 0 44px -24px rgba(103, 232, 249, 0.45),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
     .input-glow:focus-within {
         box-shadow: 
-            0 0 0 2px rgba(139, 92, 246, 0.2),
-            0 0 20px -5px rgba(139, 92, 246, 0.15);
+            0 0 0 2px rgba(110, 231, 183, 0.18),
+            0 0 24px -8px rgba(103, 232, 249, 0.25);
     }
 
     .btn-glow {
         box-shadow: 
-            0 4px 20px -5px rgba(139, 92, 246, 0.4),
-            0 0 40px -10px rgba(139, 92, 246, 0.2);
+            0 12px 36px -18px rgba(110, 231, 183, 0.85),
+            0 0 42px -18px rgba(103, 232, 249, 0.42);
     }
 
     .btn-glow:hover {
         box-shadow: 
-            0 6px 30px -5px rgba(139, 92, 246, 0.5),
-            0 0 50px -10px rgba(139, 92, 246, 0.3);
+            0 18px 45px -18px rgba(110, 231, 183, 0.95),
+            0 0 54px -18px rgba(103, 232, 249, 0.55);
     }
 
     .privacy-badge {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
-        border: 1px solid rgba(139, 92, 246, 0.2);
+        background: linear-gradient(135deg, rgba(110, 231, 183, 0.16), rgba(103, 232, 249, 0.07));
+        border: 1px solid rgba(110, 231, 183, 0.22);
     }
 
     .token-input {
-        @apply bg-background/50 rounded-2xl p-5 border border-white/[0.05] transition-all duration-300;
+        @apply rounded-3xl border border-slate-200 bg-slate-50 p-5 text-slate-950 transition-all duration-300;
     }
 
     .token-input:focus-within {
-        @apply border-primary/30 bg-background/70;
-        box-shadow: 0 0 30px -10px rgba(139, 92, 246, 0.2);
+        @apply border-emerald-300 bg-white;
+        box-shadow: 0 14px 34px -22px rgba(15, 23, 42, 0.35);
     }
 
     .swap-arrow {
-        @apply bg-card border-4 border-background p-2.5 rounded-xl transition-all duration-200;
+        @apply rounded-2xl border-4 border-white bg-slate-950 p-3 text-white transition-all duration-200;
     }
 
     .swap-arrow:hover {
-        @apply bg-secondary scale-110;
+        @apply scale-110 bg-emerald-600;
     }
 
     .status-success {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
-        border: 1px solid rgba(34, 197, 94, 0.2);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(20, 184, 166, 0.06));
+        border: 1px solid rgba(110, 231, 183, 0.24);
     }
 
     .status-warning {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
-        border: 1px solid rgba(245, 158, 11, 0.2);
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.05));
+        border: 1px solid rgba(245, 158, 11, 0.24);
     }
 
     .status-error {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
         border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .privacy-stage {
+        background:
+            radial-gradient(circle at 16% 18%, rgba(110, 231, 183, 0.18), transparent 28rem),
+            radial-gradient(circle at 82% 10%, rgba(147, 197, 253, 0.16), transparent 26rem),
+            linear-gradient(135deg, #ffffff 0%, #f8fbff 46%, #eefdf7 100%);
+    }
+
+    .privacy-mesh {
+        position: absolute;
+        inset: 0;
+        opacity: 0.45;
+        background-image:
+            linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.10) 1px, transparent 1px);
+        background-size: 72px 72px;
+        mask-image: radial-gradient(circle at 50% 36%, black, transparent 72%);
+        pointer-events: none;
+    }
+
+    .privacy-noise {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.08;
+        background-image:
+            repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+        mix-blend-mode: overlay;
+    }
+
+    .privacy-orb {
+        position: absolute;
+        border-radius: 9999px;
+        filter: blur(18px);
+        opacity: 0.35;
+        pointer-events: none;
+        animation: float 7s ease-in-out infinite;
+    }
+
+    .privacy-orb-a {
+        left: -7rem;
+        top: 12rem;
+        width: 18rem;
+        height: 18rem;
+        background: radial-gradient(circle, rgba(110, 231, 183, 0.24), transparent 70%);
+    }
+
+    .privacy-orb-b {
+        right: -6rem;
+        bottom: 5rem;
+        width: 22rem;
+        height: 22rem;
+        background: radial-gradient(circle, rgba(147, 197, 253, 0.22), transparent 70%);
+        animation-delay: -2.5s;
+    }
+
+    .font-mono {
+        font-family: var(--font-mono), "IBM Plex Mono", monospace;
     }
 }
 
